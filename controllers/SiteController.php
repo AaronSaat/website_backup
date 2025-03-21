@@ -54,16 +54,20 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-        $biroList = BiroPekerjaan::find()->select(['id', 'nama'])->asArray()->all();
-        
-        $query = Laporan::find()->with(['user.biroPekerjaan', 'kategori']);
+        $query = Laporan::find()->joinWith(['user', 'user.biroPekerjaan', 'kategori']);
 
-        // Ambil parameter filter dari request
-        $biroId = Yii::$app->request->get('biro_id');
+        $biroList = BiroPekerjaan::find()->asArray()->all();
+        $userList = User::find()->asArray()->all();
 
-        if (!empty($biroId)) {
-            $query->joinWith('user')
-                ->andWhere(['user.biro_pekerjaan_id' => $biroId]);
+        $selectedBiro = Yii::$app->request->get('biro');
+        $selectedUser = Yii::$app->request->get('user');
+
+        if ($selectedBiro) {
+            $query->andWhere(['user.biro_pekerjaan_id' => $selectedBiro]);
+        }
+
+        if ($selectedUser) {
+            $query->andWhere(['user.id' => $selectedUser]);
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -74,9 +78,12 @@ class SiteController extends Controller
         return $this->render('index', [
             'dataProvider' => $dataProvider,
             'biroList' => $biroList,
-            'selectedBiro' => $biroId, // Kirim pilihan ke view
+            'userList' => $userList,
+            'selectedBiro' => $selectedBiro,
+            'selectedUser' => $selectedUser,
         ]);
     }
+
     public function actionLogin()
     {
         // $pass1 = Yii::$app->security->generatePasswordHash('admin');

@@ -37,12 +37,24 @@ $this->title = 'Dashboard - Website Laporan Backup';
     <div class="box-header">
         <h3 class="box-title">Laporan Backup</h3>
         <div class="pull-right">
-            <label for="filter-biro">Filter Biro Pekerjaan:</label>
-            <select id="filter-biro" class="form-control" style="width: 200px; display: inline-block;">
+            <!-- Filter Biro Pekerjaan -->
+            <label for="filter-biro" style="margin-right: 5px;">Filter Biro Pekerjaan:</label>
+            <select id="filter-biro" class="form-control" style="width: 200px; display: inline-block; margin-right: 15px;">
                 <option value="">Semua</option>
                 <?php foreach ($biroList as $biro): ?>
                     <option value="<?= $biro['id'] ?>" <?= ($biro['id'] == $selectedBiro) ? 'selected' : '' ?>>
                         <?= Html::encode($biro['nama']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <!-- Filter Nama User -->
+            <label for="filter-user" style="margin-right: 5px;">Filter Nama User:</label>
+            <select id="filter-user" class="form-control" style="width: 200px; display: inline-block;">
+                <option value="">Semua</option>
+                <?php foreach ($userList as $user): ?>
+                    <option value="<?= $user['id'] ?>" <?= ($user['id'] == $selectedUser) ? 'selected' : '' ?>>
+                        <?= Html::encode($user['nama']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -148,12 +160,19 @@ $this->title = 'Dashboard - Website Laporan Backup';
     </div>
 </div>
 
-<?php
-    $js = <<<JS
-    $('#filter-biro').change(function() {
-        let biroId = $(this).val();
-        window.location.href = '?biro_id=' + biroId;
+<script>
+    // Event listener untuk filter biro dan user
+    document.getElementById('filter-biro').addEventListener('change', function () {
+        let biroId = this.value;
+        let userId = document.getElementById('filter-user').value;
+        window.location.href = '<?= Yii::$app->urlManager->createUrl(["site/index"]) ?>' + 
+            '?biro=' + biroId + '&user=' + userId;
     });
-    JS;
-    $this->registerJs($js);
-?>
+
+    document.getElementById('filter-user').addEventListener('change', function () {
+        let userId = this.value;
+        let biroId = document.getElementById('filter-biro').value;
+        window.location.href = '<?= Yii::$app->urlManager->createUrl(["site/index"]) ?>' + 
+            '?biro=' + biroId + '&user=' + userId;
+    });
+</script>
