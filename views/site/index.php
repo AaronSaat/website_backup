@@ -9,25 +9,17 @@ $this->title = 'Dashboard - Website Laporan Backup';
 
 <div class="row">
     <div class="col-md-6">
-        <div class="box box-solid box-success">
+        <div class="box box-solid box-<?= $cardType ?>">
             <div class="box-header with-border">
-                <h3 class="box-title">Terima kasih telah melakukan backup bulan ini</h3>
+                <h3 class="box-title">
+                    <?= $cardType === 'success' ? 'Terima kasih telah melakukan backup bulan ini' : 'Mohon melakukan backup bulan ini' ?>
+                </h3>
             </div>
             <div class="box-body">
-                <?= "Today's Date: " . date("d-m-Y") ?>
-                <?= "| Last Backup: " . date("d-m-Y") ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="box box-solid box-danger">
-            <div class="box-header with-border">
-                <h3 class="box-title">Mohon melakukan backup bulan ini</h3>
-            </div>
-            <div class="box-body">
-                <?= "Today's Date: " . date("d-m-Y") ?>
-                <?= "| Last Backup: " . date("d-m-Y") ?>
+                <?= "Today's Date: " . $today ?>
+                <?= " | Last Backup: " . $lastBackupDate ?>
+                <br>
+                <strong><?= $daysSinceLastBackup !== 'N/A' ? "$daysSinceLastBackup hari semenjak backup terakhir" : "Belum ada backup sebelumnya" ?></strong>
             </div>
         </div>
     </div>
@@ -113,48 +105,46 @@ $this->title = 'Dashboard - Website Laporan Backup';
                 [
                     'label' => 'Action',
                     'format' => 'raw',
-                    'value' => function($model) {
+                    'value' => function ($model) {
                         $buttons = '';
                 
-                        if ($model->status === 'Waiting for Approval') {
+                        $currentUser = Yii::$app->user->identity;
+                        $isAdmin = ($currentUser->username === 'admin');
+                        $isOwner = ($model->user_id === $currentUser->id);
+                
+                        // Jika Admin dan status "Waiting for Approval", tampilkan tombol Approve/Disapprove
+                        if ($isAdmin && $model->status === 'Waiting for Approval') {
                             $buttons .= Html::a('Approve', ['approve', 'id' => $model->id], ['class' => 'btn btn-success btn-sm']) . ' ';
                             $buttons .= Html::a('Disapprove', ['disapprove', 'id' => $model->id], ['class' => 'btn btn-danger btn-sm']) . ' ';
                         }
                 
-                        // $buttons .= Html::a('Lihat Detail', ['lihatdetail', 'id' => $model->id], ['class' => 'btn btn-info btn-sm']);
+                        // Jika user adalah admin atau pemilik laporan, tampilkan tombol edit, delete, dan view
+                        if (($isAdmin || $isOwner) && in_array($model->status, ['Waiting for Approval', 'Disapproved'])) {
+                            $buttons .= Html::a('<i class="fa fa-pencil"></i>', ['update', 'id' => $model->id], [
+                                'class' => 'btn btn-warning btn-sm',
+                                'title' => 'Update',
+                            ]) . ' ';
+                        }
                 
-                        return $buttons;
-                    }
-                ],
-                [
-                    'class' => ActionColumn::class,
-                    'template' => '{update} {delete} {view}',
-                    'buttons' => [
-                        'update' => function ($url, $model) {
-                            return in_array($model->status, ['Waiting for Approval', 'Disapproved']) ? 
-                                Html::a('<i class="fa fa-pencil"></i>', $url, [
-                                    'class' => 'btn btn-warning btn-sm',
-                                    'title' => 'Update',
-                                ]) : '';
-                        },
-                        'delete' => function ($url, $model) {
-                            return Html::a('<i class="fa fa-trash"></i>', $url, [
+                        if ($isAdmin || $isOwner) {
+                            $buttons .= Html::a('<i class="fa fa-trash"></i>', ['delete', 'id' => $model->id], [
                                 'class' => 'btn btn-danger btn-sm',
                                 'title' => 'Delete',
                                 'data' => [
                                     'confirm' => 'Apakah Anda yakin ingin menghapus laporan ini?',
                                     'method' => 'post',
                                 ],
-                            ]);
-                        },
-                        'view' => function ($url, $model) {
-                            return Html::a('<i class="fa fa-eye"></i>', $url, [
-                                'class' => 'btn btn-info btn-sm',
-                                'title' => 'Lihat Detail',
-                            ]);
-                        },
-                    ],
-                ],                
+                            ]) . ' ';
+                        }
+                
+                        $buttons .= Html::a('<i class="fa fa-eye"></i>', ['view', 'id' => $model->id], [
+                            'class' => 'btn btn-info btn-sm',
+                            'title' => 'Lihat Detail',
+                        ]);
+                
+                        return $buttons;
+                    }
+                ],                                            
             ],
         ]); ?>
     </div>

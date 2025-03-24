@@ -19,7 +19,7 @@ use Yii;
  */
 class Laporan extends \yii\db\ActiveRecord
 {
-
+    public $files;
 
     /**
      * {@inheritdoc}
@@ -39,6 +39,7 @@ class Laporan extends \yii\db\ActiveRecord
             [['user_id', 'kategori_id'], 'integer'],
             [['tanggal_backup', 'created_at'], 'safe'],
             [['file'], 'string', 'max' => 255],
+            [['files'], 'file', 'extensions' => 'jpg, png, jpeg', 'maxFiles' => 5, 'maxSize' => 10 * 1024 * 1024],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
             [['kategori_id'], 'exist', 'skipOnError' => true, 'targetClass' => Kategori::class, 'targetAttribute' => ['kategori_id' => 'id']],
         ];

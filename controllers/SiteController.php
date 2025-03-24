@@ -13,6 +13,8 @@ use app\models\Laporan;
 use app\models\BiroPekerjaan;
 use dektrium\user\models\User;
 use yii\data\ActiveDataProvider;
+use yii\web\UploadedFile;
+use DateTime;
 
 class SiteController extends Controller
 {
@@ -54,13 +56,23 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-        $query = Laporan::find()->joinWith(['user', 'user.biroPekerjaan', 'kategori']);
+        $query = Laporan::find()
+        ->joinWith(['user', 'user.biroPekerjaan', 'kategori'])
+        ->orderBy(['created_at' => SORT_DESC]);;
 
         $biroList = BiroPekerjaan::find()->asArray()->all();
         $userList = User::find()->asArray()->all();
 
         $selectedBiro = Yii::$app->request->get('biro');
         $selectedUser = Yii::$app->request->get('user');
+
+        $currentUser = Yii::$app->user->identity;
+        $isAdmin = ($currentUser->username === 'admin'); // Cek apakah user adalah admin
+
+        if (!$isAdmin) {
+            // Jika user bukan admin, hanya lihat data sesuai biro pekerjaannya
+            $query->andWhere(['user.biro_pekerjaan_id' => $currentUser->biro_pekerjaan_id]);
+        }
 
         if ($selectedBiro) {
             $query->andWhere(['user.biro_pekerjaan_id' => $selectedBiro]);
@@ -75,22 +87,41 @@ class SiteController extends Controller
             'pagination' => ['pageSize' => 10],
         ]);
 
+        // Ambil laporan terakhir yang sudah approved
+        $lastApproved = Laporan::find()
+            ->where(['user_id' => $currentUser->id, 'status' => 'Approved'])
+            ->orderBy(['tanggal_backup' => SORT_DESC])
+            ->one();
+
+        $today = new DateTime();
+        $lastBackupDate = null;
+        $cardType = 'danger'; // Default: Mohon melakukan backup
+        $daysSinceLastBackup = null; // Selisih hari sejak backup terakhir
+
+        if ($lastApproved) {
+            $lastBackupDate = new DateTime($lastApproved->tanggal_backup);
+            $daysSinceLastBackup = $lastBackupDate->diff($today)->days;
+
+            if ($daysSinceLastBackup <= 30) {
+                $cardType = 'success'; // Jika backup masih dalam 30 hari, tampilkan "Terima kasih"
+            }
+        }
+
         return $this->render('index', [
             'dataProvider' => $dataProvider,
             'biroList' => $biroList,
             'userList' => $userList,
             'selectedBiro' => $selectedBiro,
             'selectedUser' => $selectedUser,
+            'cardType' => $cardType,
+            'lastBackupDate' => $lastBackupDate ? $lastBackupDate->format('d-m-Y') : 'Belum ada backup',
+            'daysSinceLastBackup' => $daysSinceLastBackup ?? 'N/A',
+            'today' => $today->format('d-m-Y'),
         ]);
     }
 
     public function actionLogin()
     {
-        // $pass1 = Yii::$app->security->generatePasswordHash('admin');
-        // $pass2 = Yii::$app->security->generatePasswordHash('aaron');
-        // $pass3 = Yii::$app->security->generatePasswordHash('julyan');
-        // var_dump($pass1, $pass2, $pass3);die;
-
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
@@ -111,8 +142,100 @@ class SiteController extends Controller
 
     public function actionView($id)
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
+        $model = Laporan::find()
+            ->joinWith(['user', 'user.biroPekerjaan', 'kategori'])
+            ->where(['laporan.id' => $id])
+            ->one();
+
+        if (!$model) {
+            throw new NotFoundHttpException('Data laporan tidak ditemukan.');
+        }
+
+        return $this->render('detail', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionTambahlaporan()
+    {
+        $model = new Laporan();
+    
+        if ($model->load(Yii::$app->request->post())) {
+            $model->user_id = Yii::$app->user->id; // Simpan ID user yang login
+            $model->status = 'Waiting for Approval'; // Default status
+            
+            // Ambil file yang diunggah
+            $uploadedFiles = UploadedFile::getInstances($model, 'files');
+            $fileNames = [];
+    
+            if (!empty($uploadedFiles)) {
+                $uploadPath = Yii::getAlias('@webroot/uploads');
+                
+                // Pastikan folder uploads ada
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0777, true);
+                }
+    
+                // Simpan setiap file
+                foreach ($uploadedFiles as $file) {
+                    date_default_timezone_set('Asia/Jakarta');
+                    $fileName = date('YmdHis') . '_' . $file->baseName . '.' . $file->extension;
+                
+                    if ($file->saveAs($uploadPath . '/' . $fileName)) {
+                        $fileNames[] = $fileName;
+                    }
+                }                
+    
+                // Simpan nama file dalam database (dipisahkan koma jika lebih dari satu)
+                $model->file = implode(',', $fileNames);
+            }
+    
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Laporan berhasil ditambahkan!');
+                return $this->redirect(['site/index']); // Redirect ke halaman index
+            } else {
+                Yii::$app->session->setFlash('error', 'Gagal menambahkan laporan.');
+            }
+        }
+    
+        return $this->render('tambahlaporan', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionUpdate($id)
+    {
+        $model = Laporan::findOne($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Laporan tidak ditemukan.');
+        }
+
+        $oldFiles = !empty($model->file) ? explode(',', $model->file) : []; // Ambil file lama
+        $uploadPath = Yii::getAlias('@webroot/uploads');
+        
+        if ($model->load(Yii::$app->request->post())) {
+            $uploadedFiles = UploadedFile::getInstances($model, 'files'); // Ambil file baru
+            
+            $newFiles = [];
+            foreach ($uploadedFiles as $file) {
+                $fileName = date('YmdHis', time()) . '_' . $file->baseName . '.' . $file->extension; // Format yyyymmddhhmmss
+                if ($file->saveAs($uploadPath . '/' . $fileName)) {
+                    $newFiles[] = $fileName;
+                }
+            }
+
+            // Gabungkan file lama + baru, lalu batasi max 5 file
+            $allFiles = array_slice(array_merge($oldFiles, $newFiles), 0, 5);
+            $model->file = implode(',', $allFiles); 
+
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Laporan berhasil diperbarui.');
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
+        }
+
+        return $this->render('update', [
+            'model' => $model,
         ]);
     }
 
@@ -133,36 +256,62 @@ class SiteController extends Controller
         return $this->redirect(['index']);
     }
 
+    public function actionDeleteFile($id, $file)
+    {
+        $model = Laporan::findOne($id);
+
+        if ($model) {
+            $files = array_filter(explode(',', $model->file));
+            $filePath = Yii::getAlias('@webroot/uploads/') . $file;
+
+            if (in_array($file, $files) && file_exists($filePath)) {
+                unlink($filePath); // Hapus file dari server
+                $files = array_diff($files, [$file]); // Hapus dari daftar di database
+                $model->file = implode(',', $files);
+                $model->save(false);
+            }
+        }
+
+        return json_encode(['success' => true]);
+    }
+
     public function actionLogout()
     {
         if (!Yii::$app->user->isGuest) {
             Yii::$app->user->logout();
         }
         return $this->redirect(['site/login']);
-    }     
+    }   
     
-    public function actionTambahlaporan()
+    public function actionApprove($id)
     {
-        return $this->render('tambahlaporan');
+        $model = Laporan::findOne($id);
+        if ($model !== null) {
+            $model->status = 'Approved';
+            if ($model->save(false)) {
+                Yii::$app->session->setFlash('success', 'Laporan berhasil disetujui.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Gagal menyetujui laporan.');
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'Laporan tidak ditemukan.');
+        }
+        return $this->redirect(['index']);
     }
-    public function actionTambahkategori()
+
+    public function actionDisapprove($id)
     {
-        return $this->render('tambahkategori');
-    }
-    public function actionTambahbiro()
-    {
-        return $this->render('tambahbiro');
-    }
-    public function actionDaftarpengguna()
-    {
-        return $this->render('daftarpengguna');
-    }
-    public function actionDaftarkategori()
-    {
-        return $this->render('daftarkategori');
-    }
-    public function actionDaftarbiro()
-    {
-        return $this->render('daftarbiro');
+        $model = Laporan::findOne($id);
+        if ($model !== null) {
+            $model->status = 'Disapproved';
+            if ($model->save(false)) {
+                Yii::$app->session->setFlash('success', 'Laporan berhasil ditolak.');
+            } else {
+                Yii::$app->session->setFlash('error', 'Gagal menolak laporan.');
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'Laporan tidak ditemukan.');
+        }
+        return $this->redirect(['index']);
     }
 }

@@ -19,11 +19,22 @@ $this->title = 'Daftar Kategori';
             'columns' => [
                 'id',
                 'nama_kategori',
-
                 [
                     'class' => 'yii\grid\ActionColumn',
                     'template' => '{delete}',
-                ],
+                    'buttons' => [
+                        'delete' => function ($url, $model) {
+                            return Html::a('<i class="fa fa-trash"></i>', $url, [
+                                'class' => 'btn btn-danger btn-sm',
+                                'title' => 'Hapus Pengguna',
+                                'data' => [
+                                    'confirm' => 'Apakah Anda yakin ingin menghapus pengguna ini?',
+                                    'method' => 'post',
+                                ],
+                            ]);
+                        },
+                    ],
+                ],  
             ],
         ]); ?>
     </div>

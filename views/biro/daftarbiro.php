@@ -10,7 +10,7 @@ $this->title = 'Daftar Biro Pekerjaan';
     <div class="box-header with-border">
         <h3 class="box-title"><?= Html::encode($this->title) ?></h3>
         <div class="pull-right">
-            <?= Html::a('Tambah Biro', ['biro/tambahbiro'], ['class' => 'btn btn-success']) ?>
+            <?= Html::a('Tambah Biro Pekerjaan Baru', ['biro/tambahbiro'], ['class' => 'btn btn-success']) ?>
         </div>
     </div>
     <div class="box-body">
@@ -19,11 +19,22 @@ $this->title = 'Daftar Biro Pekerjaan';
             'columns' => [
                 'id',
                 'nama',
-
                 [
                     'class' => 'yii\grid\ActionColumn',
                     'template' => '{delete}',
-                ],
+                    'buttons' => [
+                        'delete' => function ($url, $model) {
+                            return Html::a('<i class="fa fa-trash"></i>', $url, [
+                                'class' => 'btn btn-danger btn-sm',
+                                'title' => 'Hapus Pengguna',
+                                'data' => [
+                                    'confirm' => 'Apakah Anda yakin ingin menghapus pengguna ini?',
+                                    'method' => 'post',
+                                ],
+                            ]);
+                        },
+                    ],
+                ],  
             ],
         ]); ?>
     </div>

@@ -9,46 +9,26 @@ use yii\helpers\Html;
 
         <!-- Sidebar user panel -->
         <div class="user-panel">
-        <div class="pull-left image">
-            <?php if (!Yii::$app->user->isGuest): ?>
-                <?php $user = Yii::$app->user->identity; ?>
-                <?php $foto = ($user->username === 'admin') ? 'user1-128x128.jpg' : 'user2-160x160.jpg'; ?>
-            <?php else: ?>
-                <?php $foto = 'user6-128x128.jpg'; ?>
-            <?php endif; ?>
-            
-            <img src="<?= $directoryAsset ?>/img/<?= $foto ?>" class="img-circle" alt="User Image"/>
-        </div>
-        <div class="pull-left info">
-            <p>
-                <?php if (!Yii::$app->user->isGuest): ?>
-                    <?= Html::encode($user->nama) ?>
-                <?php else: ?>
-                    Guest
-                <?php endif; ?>
-            </p>
+            <?php $user = !Yii::$app->user->isGuest ? Yii::$app->user->identity : null; ?>
 
-            <?php if (!Yii::$app->user->isGuest): ?>
-                <?php if ($user->username === 'admin'): ?>
-                    <a href="#"><i class="fa fa-user-shield"></i> Admin</a>
-                <?php else: ?>
-                    <a href="#"><i class="fa fa-briefcase"></i> <?= Html::encode($user->biroPekerjaan->nama) ?></a>
-                <?php endif; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
-        <!-- search form -->
-        <!-- <form action="#" method="get" class="sidebar-form">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Search..."/>
-              <span class="input-group-btn">
-                <button type='submit' name='search' id='search-btn' class="btn btn-flat"><i class="fa fa-search"></i>
-                </button>
-              </span>
+            <div class="pull-left image">
+                <span class="glyphicon glyphicon-user" style="font-size: 40px; color: white;"></span>
             </div>
-        </form> -->
-        <!-- /.search form -->
+
+            <div class="pull-left info">
+                <p>
+                    <?= $user ? Html::encode($user->nama) : 'Guest' ?>
+                </p>
+
+                <?php if ($user): ?>
+                    <?php if ($user->username === 'admin'): ?>
+                        <a href="#"><i class="fa fa-user-shield"></i> Admin</a>
+                    <?php else: ?>
+                        <a href="#"><i class="fa fa-briefcase"></i> <?= Html::encode($user->biroPekerjaan->nama) ?></a>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <?= Nav::widget([
             'encodeLabels' => false,
@@ -78,7 +58,7 @@ use yii\helpers\Html;
 
                 Yii::$app->user->isGuest ? 
                 ['label' => '<span class="glyphicon glyphicon-lock"></span> Masuk', 'url' => ['/site/login']] : 
-                ['label' => '<span class="glyphicon glyphicon-off"></span> Logout (' . Yii::$app->user->identity->nama . ')',
+                ['label' => '<span class="glyphicon glyphicon-off"></span> Keluar (' . Yii::$app->user->identity->nama . ')',
                 'url' => ['/site/logout'],
                 'linkOptions' => ['data-method' => 'post']],
             ]),

@@ -29,11 +29,28 @@ $this->title = 'Daftar Pengguna';
                     },
                 ],
                 'created_at:datetime',
-
                 [
                     'class' => 'yii\grid\ActionColumn',
                     'template' => '{update} {delete}',
-                ],
+                    'buttons' => [
+                        'update' => function ($url, $model) {
+                            return Html::a('<i class="fa fa-pencil"></i>', $url, [
+                                'class' => 'btn btn-warning btn-sm',
+                                'title' => 'Update Pengguna',
+                            ]);
+                        },
+                        'delete' => function ($url, $model) {
+                            return Html::a('<i class="fa fa-trash"></i>', $url, [
+                                'class' => 'btn btn-danger btn-sm',
+                                'title' => 'Hapus Pengguna',
+                                'data' => [
+                                    'confirm' => 'Apakah Anda yakin ingin menghapus pengguna ini?',
+                                    'method' => 'post',
+                                ],
+                            ]);
+                        },
+                    ],
+                ],                
             ],
         ]); ?>
     </div>

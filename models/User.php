@@ -37,11 +37,6 @@ class User extends ActiveRecord implements IdentityInterface
             'biro_pekerjaan_id' => 'Biro Pekerjaan',
         ];
     }
-
-    public function getBiro()
-    {
-        return $this->hasOne(BiroPekerjaan::class, ['id' => 'biro_pekerjaan']);
-    }
     
     public function beforeSave($insert)
     {

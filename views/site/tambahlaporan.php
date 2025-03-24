@@ -1,73 +1,65 @@
 <?php
-    use yii\helpers\Html;
-    use yii\widgets\ActiveForm;
-    use yii\helpers\ArrayHelper;
-    use kartik\date\DatePicker;
-    use kartik\file\FileInput;
-    
-    $this->title = 'Tambah Laporan Baru';
+use yii\helpers\Html;
+use yii\widgets\ActiveForm;
+use kartik\date\DatePicker;
+use kartik\file\FileInput;
+use yii\helpers\ArrayHelper;
+use app\models\Kategori;
+
+$this->title = 'Tambah Laporan Baru';
 ?>
 
-<div class="laporan-form">
+<div class="site-tambah-laporan">
+    <h1><?= Html::encode($this->title) ?></h1>
+
     <?php $form = ActiveForm::begin([
-        // 'action' => Url::to(['/site/unggahlaporan']),
+        'action' => ['site/tambahlaporan'], // Pastikan ini benar
         'options' => ['enctype' => 'multipart/form-data']
     ]); ?>
 
     <!-- Nama User -->
+    <?= $form->field($model, 'user_id')->hiddenInput(['value' => Yii::$app->user->id])->label(false) ?>
+
     <div class="form-group">
         <label>Nama</label>
-        <input type="text" class="form-control" value="Aaron Julyan" readonly>
+        <input type="text" class="form-control" value="<?= Yii::$app->user->identity->nama ?>" readonly>
     </div>
 
     <!-- Biro Pekerjaan -->
     <div class="form-group">
         <label>Biro Pekerjaan</label>
-        <input type="text" class="form-control" value="IT" readonly>
+        <input type="text" class="form-control" value="<?= Yii::$app->user->identity->biroPekerjaan->nama ?>" readonly>
     </div>
 
     <!-- Tanggal Backup -->
-    <div class="form-group">
-        <label>Tanggal Backup</label>
-        <?= DatePicker::widget([
-            'name' => 'tanggal_backup',
-            'options' => ['placeholder' => 'Pilih tanggal backup...'],
-            'pluginOptions' => [
-                'autoclose' => true,
-                'format' => 'yyyy-mm-dd',
-                'todayHighlight' => true
-            ]
-        ]); ?>
-    </div>
+    <?= $form->field($model, 'tanggal_backup')->widget(DatePicker::class, [
+        'options' => ['placeholder' => 'Pilih tanggal backup...'],
+        'pluginOptions' => [
+            'autoclose' => true,
+            'format' => 'yyyy-mm-dd',
+            'todayHighlight' => true
+        ]
+    ]) ?>
 
     <!-- Kategori Backup -->
-    <div class="form-group">
-        <label>Kategori Backup</label>
-        <select name="kategori_backup" class="form-control">
-            <option value="">Pilih Kategori</option>
-            <option value="HDD / SSD">HDD / SSD</option>
-            <option value="Google Drive">Google Drive</option>
-            <option value="NAS">NAS</option>
-        </select>
-    </div>
+    <?= $form->field($model, 'kategori_id')->dropDownList(
+        ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori'),
+        ['prompt' => 'Pilih Kategori']
+    ) ?>
 
     <!-- Upload File (Maksimal 5 file, max 10MB) -->
-    <div class="form-group">
-        <label>Upload File</label>
-        <?= FileInput::widget([
-            'name' => 'files[]',
-            'options' => ['accept' => 'image/*', 'multiple' => true],
-            'pluginOptions' => [
-                'maxFileCount' => 5,
-                'maxFileSize' => 10240, // 10MB
-                'showUpload' => false,
-                'allowedFileExtensions' => ['jpg', 'png', 'jpeg'],
-            ]
-        ]); ?>
-    </div>
+    <?= $form->field($model, 'files[]')->widget(FileInput::class, [
+        'options' => ['accept' => 'image/*', 'multiple' => true],
+        'pluginOptions' => [
+            'maxFileCount' => 5,
+            'maxFileSize' => 10240, // 10MB
+            'showUpload' => false,
+            'allowedFileExtensions' => ['jpg', 'png', 'jpeg'],
+        ]
+    ]) ?>
 
     <div class="form-group">
-        <?= Html::submitButton('Upload', ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('Simpan', ['class' => 'btn btn-success']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

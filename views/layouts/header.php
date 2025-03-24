@@ -20,20 +20,16 @@ use yii\bootstrap\NavBar;
         <div class="navbar-custom-menu">
 
             <ul class="nav navbar-nav">
-
-                <!-- Messages: style can be found in dropdown.less-->
-                <li class="dropdown messages-menu">
+                <!-- <li class="dropdown messages-menu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                         <i class="fa fa-bell-o"></i>
                         <span class="label label-success">1</span>
-                        <span class="label label-warning">10</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li class="header">You have 4 messages</li>
                         <li>
-                            <!-- inner menu: contains the actual data -->
                             <ul class="menu">
-                                <li><!-- start message -->
+                                <li>
                                     <a href="#">
                                         <div class="pull-left">
                                             <img src="<?= $directoryAsset ?>/img/user2-160x160.jpg" class="img-circle"
@@ -61,18 +57,40 @@ use yii\bootstrap\NavBar;
                         </li>
                         <li class="footer"><a href="#">See All Messages</a></li>
                     </ul>
-                </li>
+                </li> -->
 
-                <li class="dropdown messages-menu">
-                    <?php if (Yii::$app->user->isGuest): ?>
-                        <?= Html::a('Masuk', ['/site/login'], ['class' => 'btn btn-success']) ?>
-                    <?php else: ?>
-                        <?= Html::a(
-                            'Keluar (' . Yii::$app->user->identity->nama . ')',
-                            ['/site/logout'],
-                            ['data-method' => 'post', 'class' => 'btn btn-danger']
-                        ) ?>
-                    <?php endif; ?>
+                <li class="dropdown user user-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="glyphicon glyphicon-user"></i>
+                        <span>
+                            <?= Yii::$app->user->isGuest ? 'Tamu' : Yii::$app->user->identity->nama ?>
+                            <i class="caret"></i>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="user-header">
+                            <i class="glyphicon glyphicon-user" style="font-size: 50px;"></i>
+                            <p>
+                                <?= Yii::$app->user->isGuest ? 'Tamu' : Yii::$app->user->identity->nama ?>
+                                <small><?= Yii::$app->user->isGuest ? 'Belum Masuk' : 'Terdaftar Sejak ' . Yii::$app->user->identity->created_at ?></small>
+                            </p>
+                        </li>
+                        <li class="user-footer">
+                            <?php if (Yii::$app->user->isGuest): ?>
+                                <div class="text-center">
+                                    <?= Html::a('<span class="glyphicon glyphicon-lock"></span> Masuk', ['/site/login'], ['class' => 'btn btn-success btn-block']) ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-center">
+                                    <?= Html::a(
+                                        '<span class="glyphicon glyphicon-off"></span> Keluar (' . Yii::$app->user->identity->nama . ')',
+                                        ['/site/logout'],
+                                        ['class' => 'btn btn-danger btn-block', 'data-method' => 'post']
+                                    ) ?>
+                                </div>
+                            <?php endif; ?>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>
