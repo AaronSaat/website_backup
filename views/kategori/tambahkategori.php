@@ -11,8 +11,10 @@ $this->title = 'Tambah Kategori';
 
         <?= $form->field($model, 'nama_kategori')->textInput(['placeholder' => 'Masukkan Nama Kategori']) ?>
 
-        <div class="form-group">
-            <?= Html::submitButton('<i class="fa fa-save"></i> Simpan', ['class' => 'btn btn-success']) ?>
+        <div class="form-group text-center">
+            <?= Html::submitButton('<i class="fa fa-save"></i> Simpan', [
+                'class' => 'btn btn-success btn-lg px-4 py-2'
+            ]) ?>
         </div>
 
         <?php ActiveForm::end(); ?>

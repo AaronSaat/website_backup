@@ -51,7 +51,7 @@ use yii\helpers\Html;
                 ['label' => '<i class="fa fa-th-list"></i> Lihat Daftar Kategori', 'url' => ['/kategori/daftarkategori']] : null,
 
                 Yii::$app->user->identity ?
-                ['label' => '<i class="fa fa-plus-square"></i> Tambah Laporan Baru', 'url' => ['/site/tambahlaporan']] : null,
+                ['label' => '<i class="fa fa-plus-square"></i> Tambah Laporan', 'url' => ['/site/tambahlaporan']] : null,
 
                 Yii::$app->user->identity ?
                 '<li class="header"></li>' : null,

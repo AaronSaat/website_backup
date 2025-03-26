@@ -12,7 +12,7 @@ $this->title = 'Daftar Pengguna';
     <div class="box-header with-border">
         <h3 class="box-title"><?= Html::encode($this->title) ?></h3>
         <div class="pull-right">
-            <?= Html::a('Tambah Pengguna Baru', ['pengguna/tambahpengguna'], ['class' => 'btn btn-success']) ?>
+            <?= Html::a('<i class="fa fa-plus"></i> Tambah Pengguna', ['pengguna/tambahpengguna'], ['class' => 'btn btn-success']) ?>
         </div>
     </div>
     <div class="box-body">
@@ -34,13 +34,13 @@ $this->title = 'Daftar Pengguna';
                     'template' => '{update} {delete}',
                     'buttons' => [
                         'update' => function ($url, $model) {
-                            return Html::a('<i class="fa fa-pencil"></i>', $url, [
+                            return Html::a('<i class="fa fa-pencil"></i> Edit', $url, [
                                 'class' => 'btn btn-warning btn-sm',
                                 'title' => 'Update Pengguna',
                             ]);
                         },
                         'delete' => function ($url, $model) {
-                            return Html::a('<i class="fa fa-trash"></i>', $url, [
+                            return Html::a('<i class="fa fa-trash"></i> Delete', $url, [
                                 'class' => 'btn btn-danger btn-sm',
                                 'title' => 'Hapus Pengguna',
                                 'data' => [

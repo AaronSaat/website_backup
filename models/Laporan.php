@@ -10,16 +10,15 @@ use Yii;
  * @property int $id
  * @property int $user_id
  * @property string $tanggal_backup
- * @property int $kategori_id
- * @property string $file
  * @property string $created_at
+ * @property string|null $updated_at
+ * @property string $status
  *
- * @property Kategori $kategori
  * @property User $user
  */
 class Laporan extends \yii\db\ActiveRecord
 {
-    public $files;
+
 
     /**
      * {@inheritdoc}
@@ -35,13 +34,13 @@ class Laporan extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'tanggal_backup', 'kategori_id', 'file'], 'required'],
-            [['user_id', 'kategori_id'], 'integer'],
-            [['tanggal_backup', 'created_at'], 'safe'],
-            [['file'], 'string', 'max' => 255],
-            [['files'], 'file', 'extensions' => 'jpg, png, jpeg', 'maxFiles' => 5, 'maxSize' => 10 * 1024 * 1024],
+            [['updated_at'], 'default', 'value' => null],
+            [['status'], 'default', 'value' => 'Waiting for Approval'],
+            [['user_id', 'tanggal_backup'], 'required', 'on' => 'create'],
+            [['user_id'], 'integer'],
+            [['tanggal_backup', 'created_at', 'updated_at'], 'safe'],
+            [['status'], 'string', 'max' => 255],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-            [['kategori_id'], 'exist', 'skipOnError' => true, 'targetClass' => Kategori::class, 'targetAttribute' => ['kategori_id' => 'id']],
         ];
     }
 
@@ -54,30 +53,28 @@ class Laporan extends \yii\db\ActiveRecord
             'id' => 'ID',
             'user_id' => 'User ID',
             'tanggal_backup' => 'Tanggal Backup',
-            'kategori_id' => 'Kategori ID',
-            'file' => 'File',
             'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+            'status' => 'Status',
         ];
     }
 
-    /**
-     * Gets query for [[Kategori]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getKategori()
-    {
-        return $this->hasOne(Kategori::class, ['id' => 'kategori_id']);
-    }
-
-    /**
-     * Gets query for [[User]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+     public function getFiles()
+    {
+        return $this->hasMany(File::class, ['user_id' => 'user_id']);
+    }
+
+    public function beforeSave($insert)
+    {
+        if (empty($this->tanggal_backup)) {
+            $this->tanggal_backup = null;
+        }
+        return parent::beforeSave($insert);
     }
 
 }

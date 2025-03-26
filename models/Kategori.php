@@ -48,15 +48,4 @@ class Kategori extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
         ];
     }
-
-    /**
-     * Gets query for [[Laporans]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getLaporans()
-    {
-        return $this->hasMany(Laporan::class, ['kategori_id' => 'id']);
-    }
-
 }

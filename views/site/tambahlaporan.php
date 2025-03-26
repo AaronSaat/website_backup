@@ -13,7 +13,7 @@ $this->title = 'Tambah Laporan Baru';
     <h1><?= Html::encode($this->title) ?></h1>
 
     <?php $form = ActiveForm::begin([
-        'action' => ['site/tambahlaporan'], // Pastikan ini benar
+        'action' => ['site/tambahlaporan'], 
         'options' => ['enctype' => 'multipart/form-data']
     ]); ?>
 
@@ -32,34 +32,40 @@ $this->title = 'Tambah Laporan Baru';
     </div>
 
     <!-- Tanggal Backup -->
-    <?= $form->field($model, 'tanggal_backup')->widget(DatePicker::class, [
-        'options' => ['placeholder' => 'Pilih tanggal backup...'],
-        'pluginOptions' => [
-            'autoclose' => true,
-            'format' => 'yyyy-mm-dd',
-            'todayHighlight' => true
-        ]
-    ]) ?>
-
-    <!-- Kategori Backup -->
-    <?= $form->field($model, 'kategori_id')->dropDownList(
-        ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori'),
-        ['prompt' => 'Pilih Kategori']
-    ) ?>
-
-    <!-- Upload File (Maksimal 5 file, max 10MB) -->
-    <?= $form->field($model, 'files[]')->widget(FileInput::class, [
-        'options' => ['accept' => 'image/*', 'multiple' => true],
-        'pluginOptions' => [
-            'maxFileCount' => 5,
-            'maxFileSize' => 10240, // 10MB
-            'showUpload' => false,
-            'allowedFileExtensions' => ['jpg', 'png', 'jpeg'],
-        ]
-    ]) ?>
-
     <div class="form-group">
-        <?= Html::submitButton('Simpan', ['class' => 'btn btn-success']) ?>
+        <?= $form->field($model, 'tanggal_backup')->widget(DatePicker::class, [
+            'options' => [
+                'placeholder' => 'Pilih tanggal backup...',
+                'value' => $model->isNewRecord ? date('Y-m-d') : $model->tanggal_backup,],
+            'pluginOptions' => [
+                'autoclose' => true,
+                'format' => 'yyyy-mm-dd',
+                'todayHighlight' => true
+            ]
+        ]) ?>
+    </div>
+    
+    <!-- Upload File (Maksimal .. file, max 10MB) -->
+    <div class="form-group">
+        <?= $form->field($model, 'files[]')->widget(FileInput::class, [
+            'options' => ['accept' => 'image/*, .csv', 'multiple' => true],
+            'pluginOptions' => [
+                // 'maxFileCount' => 5,
+                'maxFileSize' => 10240, // 10MB
+                'showUpload' => false,
+                'allowedFileExtensions' => ['jpg', 'png', 'jpeg', 'csv', 'docx'],
+                'msgPlaceholder' => 'Allowed file types: JPG, PNG, JPEG, CSV',
+                'previewFileType' => 'any',
+                'overwriteInitial' => false,
+                // 'showPreview' => false,
+            ]
+        ]) ?>
+    </div>
+
+    <div class="form-group text-center">
+        <?= Html::submitButton('<i class="fa fa-save"></i> Simpan', [
+            'class' => 'btn btn-success btn-lg px-4 py-2'
+        ]) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

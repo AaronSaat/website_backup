@@ -2,6 +2,7 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+date_default_timezone_set('Asia/Jakarta');
 
 $config = [
     'id' => 'basic',
@@ -72,6 +73,12 @@ $config = [
                 ],
             ],
         ],
+        'formatter' => [
+            'locale' => 'id-ID', 
+            'defaultTimeZone' => 'Asia/Jakarta',
+            'timeZone' => 'Asia/Jakarta',
+        ],
+        'timezone' => 'Asia/Jakarta',
         'user' => [
             'identityClass' => 'app\models\User', 
         ],  
