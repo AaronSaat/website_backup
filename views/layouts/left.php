@@ -4,10 +4,7 @@ use yii\helpers\Html;
 
 ?>
 <aside class="main-sidebar">
-
     <section class="sidebar">
-
-        <!-- Sidebar user panel -->
         <div class="user-panel">
             <?php $user = !Yii::$app->user->isGuest ? Yii::$app->user->identity : null; ?>
 
@@ -16,9 +13,7 @@ use yii\helpers\Html;
             </div>
 
             <div class="pull-left info">
-                <p>
-                    <?= $user ? Html::encode($user->nama) : 'Guest' ?>
-                </p>
+                <p><?= $user ? Html::encode($user->nama) : 'Guest' ?></p>
 
                 <?php if ($user): ?>
                     <?php if ($user->username === 'admin'): ?>
@@ -38,17 +33,18 @@ use yii\helpers\Html;
                 Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
                 ['label' => '<span class="fa fa-file-code-o"></span> Gii', 'url' => ['/gii']] : null,
                 
-                Yii::$app->user->identity ?
-                ['label' => '<i class="fa fa-th-list"></i> Lihat Laporan Backup', 'url' => ['/site/index']] : null,
+                Yii::$app->user->identity ? 
+                    ['label' => '<i class="fa fa-folder-open"></i> Lihat Laporan Backup', 'url' => ['/site/index']] : null,
 
                 Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                ['label' => '<i class="fa fa-th-list"></i> Lihat Daftar Pengguna', 'url' => ['/pengguna/daftarpengguna']] : null,
+                    ['label' => '<i class="fa fa-users"></i> Lihat Daftar Pengguna', 'url' => ['/pengguna/daftarpengguna']] : null,
 
                 Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                ['label' => '<i class="fa fa-th-list"></i> Lihat Daftar Biro Pekerjaan', 'url' => ['/biro/daftarbiro']] : null,
+                    ['label' => '<i class="fa fa-building"></i> Lihat Daftar Biro Pekerjaan', 'url' => ['/biro/daftarbiro']] : null,
 
                 Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                ['label' => '<i class="fa fa-th-list"></i> Lihat Daftar Kategori', 'url' => ['/kategori/daftarkategori']] : null,
+                    ['label' => '<i class="fa fa-tags"></i> Lihat Daftar Kategori', 'url' => ['/kategori/daftarkategori']] : null,
+
 
                 Yii::$app->user->identity ?
                 ['label' => '<i class="fa fa-plus-square"></i> Tambah Laporan', 'url' => ['/site/tambahlaporan']] : null,
