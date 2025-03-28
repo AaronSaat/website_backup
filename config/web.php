@@ -22,10 +22,13 @@ $config = [
             'enableConfirmation' => false,
             'enableUnconfirmedLogin' => true,
         ],
+        'admin' => [
+            'class' => 'mdm\admin\Module',      
+            'layout' => 'left-menu', // 'left-menu', 'top-menu', atau 'main'
+        ],
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'exU8Agz3brmfW2g0m_EQ4UcSe4063k4x',
         ],
         'cache' => [
@@ -33,24 +36,18 @@ $config = [
             'cachePath' => '@app/runtime/cache',
         ],
         'user' => [
-            // 'identityClass' => 'dektrium\user\models\User',
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
-            // 'authTimeout' => 60, //timeout
         ],
-        'admin' => [
-            'class' => 'mdm\admin\Module',
-        ],
-        'authManager' => [
-            'class' => 'yii\rbac\DbManager',
-        ],
+        // 'authManager' => [
+        //     'class' => 'yii\rbac\DbManager',
+        // ],
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
-            // send all mails to a file by default.
             'useFileTransport' => true,
         ],
         'log' => [
@@ -71,53 +68,48 @@ $config = [
         ],
         'assetManager' => [
             'bundles' => [
-                    'kartik\form\ActiveFormAsset' => [
-                        'bsDependencyEnabled' => false // Jika ada konflik dengan Bootstrap
-                    ],
+                'kartik\form\ActiveFormAsset' => [
+                    'bsDependencyEnabled' => false
                 ],
+            ],
         ],
         'formatter' => [
             'locale' => 'id-ID', 
             'defaultTimeZone' => 'Asia/Jakarta',
             'timeZone' => 'Asia/Jakarta',
         ],
-        'timezone' => 'Asia/Jakarta',
-        'user' => [
-            'identityClass' => 'app\models\User', 
-        ],  
         'db' => $db,
-        'layout' => 'main',
-        /*
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                // '<controller:\w+>/<id:\d+>' => '<controller>/view',
+                // '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
+                // '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
             ],
-        ],
-        */
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [],
         ],      
     ],
+    // 'as access' => [
+    //     'class' => 'mdm\admin\components\AccessControl',
+    //     'allowActions' => [
+    //         'site/login',
+    //         'site/logout',
+    //         'site/error',
+    //         'admin/*', // sementara agar bisa akses RBAC, hapus nanti
+    //     ],
+    // ],
     'params' => $params,
 ];
 
 if (YII_ENV_DEV) {
-    // configuration adjustments for 'dev' environment
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-        // uncomment the following to add your IP if you are not connecting from localhost.
-        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 }
 

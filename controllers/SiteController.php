@@ -63,6 +63,7 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
+
         $query = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan'])
             ->orderBy(['created_at' => SORT_DESC]);

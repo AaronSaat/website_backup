@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'yiisoft/yii2-app-basic',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '6d6ec4b5991380f7622cef3d05c953500808e7fc',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -303,15 +303,6 @@
             'install_path' => __DIR__ . '/../masterminds/html5',
             'aliases' => array(),
             'dev_requirement' => true,
-        ),
-        'mdmsoft/yii2-admin' => array(
-            'pretty_version' => '2.12',
-            'version' => '2.12.0.0',
-            'reference' => '10e526fbcf6350ed4cc9ba6298f887d611685367',
-            'type' => 'yii2-extension',
-            'install_path' => __DIR__ . '/../mdmsoft/yii2-admin',
-            'aliases' => array(),
-            'dev_requirement' => false,
         ),
         'myclabs/deep-copy' => array(
             'pretty_version' => '1.13.0',
@@ -866,9 +857,9 @@
             'dev_requirement' => false,
         ),
         'yiisoft/yii2-app-basic' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '6d6ec4b5991380f7622cef3d05c953500808e7fc',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
