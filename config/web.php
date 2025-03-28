@@ -30,10 +30,13 @@ $config = [
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
+            'cachePath' => '@app/runtime/cache',
         ],
         'user' => [
-            'identityClass' => 'dektrium\user\models\User',
+            // 'identityClass' => 'dektrium\user\models\User',
+            'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            // 'authTimeout' => 60, //timeout
         ],
         'admin' => [
             'class' => 'mdm\admin\Module',
@@ -67,11 +70,11 @@ $config = [
             ],
         ],
         'assetManager' => [
-        'bundles' => [
-                'kartik\form\ActiveFormAsset' => [
-                    'bsDependencyEnabled' => false // Jika ada konflik dengan Bootstrap
+            'bundles' => [
+                    'kartik\form\ActiveFormAsset' => [
+                        'bsDependencyEnabled' => false // Jika ada konflik dengan Bootstrap
+                    ],
                 ],
-            ],
         ],
         'formatter' => [
             'locale' => 'id-ID', 

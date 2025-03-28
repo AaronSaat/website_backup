@@ -14,10 +14,13 @@ use app\models\Log;
 use app\models\File;
 use app\models\Kategori;
 use app\models\BiroPekerjaan;
+use app\models\Notes;
+use app\models\Activity;
 use dektrium\user\models\User;
 use yii\data\ActiveDataProvider;
 use yii\web\UploadedFile;
 use yii\helpers\ArrayHelper;
+use yii\data\Pagination;
 use DateTime;
 
 class SiteController extends Controller
@@ -63,6 +66,7 @@ class SiteController extends Controller
         $query = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan'])
             ->orderBy(['created_at' => SORT_DESC]);
+            // ->where(['!=', 'user_id', 1]); // Jangan tampilkan user dengan id 1
 
         $biroList = BiroPekerjaan::find()->asArray()->all();
         $userList = User::find()->asArray()->all();
@@ -159,23 +163,41 @@ class SiteController extends Controller
     public function actionView($user_id)
     {
         $model = Laporan::find()
-            ->joinWith(['user', 'user.biroPekerjaan'])
+            ->joinWith(['user', 'user.biroPekerjaan', 'note'])
             ->where(['laporan.user_id' => $user_id])
             ->one();
 
         if (!$model) {
             throw new NotFoundHttpException('Data laporan tidak ditemukan.');
         }
+            
+        // $files = File::find()->where(['user_id' => $user_id])
+        //         ->orderBy(['created_at' => SORT_DESC])
+        //         ->all();
+        // $logs = Log::find()->where(['user_id' => $user_id])        
+        //         ->orderBy(['tanggal_waktu' => SORT_DESC])
+        //         ->all();
 
-        $files = File::find()->where(['user_id' => $user_id])->all();
-        $logs = Log::find()->where(['user_id' => $user_id])->all();
+        // Query untuk Files
+        $queryFiles = File::find()->where(['user_id' => $user_id])->orderBy(['created_at' => SORT_DESC]);
+        $countFiles = clone $queryFiles;
+        $paginationFiles = new Pagination(['totalCount' => $countFiles->count(), 'pageSize' => 50]); 
+        $files = $queryFiles->offset($paginationFiles->offset)->limit($paginationFiles->limit)->all();
+
+        // Query untuk Logs
+        $queryLogs = Log::find()->where(['user_id' => $user_id])->orderBy(['tanggal_waktu' => SORT_DESC]);
+        $countLogs = clone $queryLogs;
+        $paginationLogs = new Pagination(['totalCount' => $countLogs->count(), 'pageSize' => 50]);
+        $logs = $queryLogs->offset($paginationLogs->offset)->limit($paginationLogs->limit)->all();
         $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori');
 
         return $this->render('detail', [
             'model' => $model,
-            'files' => $files,
             'logs' => $logs,
+            'files' => $files,
             'kategoriList' => $kategoriList,
+            'paginationFiles' => $paginationFiles,
+            'paginationLogs' => $paginationLogs,
         ]);
     }
 
@@ -190,8 +212,10 @@ class SiteController extends Controller
             $model = new Laporan();
             $model->user_id = Yii::$app->user->id;
             $model->status = 'Waiting for Approval'; 
+            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
         } else {
             $model->status = 'Waiting for Approval';
+            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
         }
 
         if ($model->load(Yii::$app->request->post())) {
@@ -201,7 +225,7 @@ class SiteController extends Controller
             }
 
             $model->tanggal_backup = Yii::$app->formatter->asDate($model->tanggal_backup, 'php:Y-m-d');
-            $model->updated_at = Yii::$app->formatter->asDate($model->tanggal_backup, 'php:Y-m-d');
+            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
 
             if ($model->save()) {
                 $uploadedFiles = UploadedFile::getInstances($model, 'files');
@@ -232,13 +256,31 @@ class SiteController extends Controller
                         if ($fileModel->save()) {
                             if ($file->extension === 'csv') {
                                 $this->processCsvFile($filePath);
-                            }
+                            } 
                         } else {
                             Yii::$app->session->setFlash('error', 'Gagal menyimpan file ke database.');
                             return $this->redirect(['site/index']);
                         }
                     }
                 }
+
+                Notes::deleteAll(['user_id' => Yii::$app->user->id]);
+
+                // add activity log message
+                // pertama dari sisi user
+                // kedua dari sisi admin
+                $activity = new Activity();
+                $activity->user_id = Yii::$app->user->id;
+                $activity->action_type = 'Create';
+                $activity->notes = Yii::$app->user->identity->nama . " menambahkan laporan baru";
+                $activity->save();
+
+                $activity = new Activity();
+                $adminUser = User::find()->where(['username' => 'admin'])->one(); //find id admin
+                $activity->user_id = $adminUser ? $adminUser->id : null;
+                $activity->action_type = 'Create';
+                $activity->notes = "Laporan baru telah dibuat oleh " . Yii::$app->user->identity->nama; 
+                $activity->save();
 
                 if ($isNewRecord) {
                     Yii::$app->session->setFlash('success', 'Laporan baru dan datanya berhasil disimpan!');
@@ -324,6 +366,22 @@ class SiteController extends Controller
             $file->delete();
         }
 
+        // add activity log message
+        // pertama dari sisi admin
+        // kedua dari sisi user
+        $activity = new Activity();
+        $activity->user_id = Yii::$app->user->identity->id;
+        $activity->action_type = 'Delete';
+        $activity->notes = Yii::$app->user->identity->nama . " menghapus laporan milik " . 
+        (User::findOne($user_id)->nama ?? 'Tidak diketahui');
+        $activity->save();
+
+        $activity = new Activity();
+        $activity->user_id = $user_id;
+        $activity->action_type = 'Delete';
+        $activity->notes = "Laporan anda telah dihapus oleh " . Yii::$app->user->identity->nama; 
+        $activity->save();
+
         // Hapus laporan setelah log dan file dihapus
         if ($model->delete()) {
             Yii::$app->session->setFlash('success', 'Laporan dan semua data terkait berhasil dihapus.');
@@ -341,29 +399,54 @@ class SiteController extends Controller
         if ($file) {
             $user_id = $file->user_id; 
             $filePath = Yii::getAlias('@webroot/') . $file->direktori_file;
+            $deletedFile = str_replace('uploads/', '', $file->direktori_file);
 
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
 
             if ($file->delete()) {
+                // add activity log message
+                $activity = new Activity();
+                $activity->user_id = Yii::$app->user->id;
+                $activity->action_type = 'Delete';
+                $activity->notes = Yii::$app->user->identity->nama . " menghapus file " . $deletedFile;
+                $activity->save();
+
                 Yii::$app->session->setFlash('success', 'File berhasil dihapus dari server.');
                 return $this->redirect(['view', 'user_id' => $user_id]);
             }
         }
 
-        Yii::$app->session->setFlash('error', 'File tidak ditemukan');
-        return $this->redirect(['view', 'user_id' => Yii::$app->user->id]);
-    }   
+        Yii::$app->session->setFlash('error', 'File tidak ditemukan.');
+        return $this->redirect(['index']);
+    } 
 
     public function actionDeletelog($id)
     {
         $log = Log::findOne($id);
 
         if ($log) {
-            $user_id = $log->user_id; // Ambil user_id sebelum dihapus
+            $user_id = $log->user_id;
+
+            $user = User::findOne($log->user_id);
+            $userName = $user ? $user->nama : 'Unknown';
+
+            $deletedLogDetails = "Log dihapus: \n" .
+                "Nama: $userName, " .
+                "Tanggal & Waktu: " . Yii::$app->formatter->asDatetime($log->tanggal_waktu, 'php:d-m-Y H:i:s') . ", " .
+                "Tipe: $log->tipe, " .
+                "Nama File: $log->nama, " .
+                "Ukuran: " . number_format($log->ukuran, 2, ',', '') . " byte";
 
             if ($log->delete()) {
+                // Catat aktivitas
+                $activity = new Activity();
+                $activity->user_id = Yii::$app->user->id;
+                $activity->action_type = 'Delete';
+                $activity->notes = Yii::$app->user->identity->nama . " menghapus " . $deletedLogDetails;
+                $activity->save();
+
                 Yii::$app->session->setFlash('success', 'Log berhasil dihapus dari database.');
                 return $this->redirect(['view', 'user_id' => $user_id]);
             }
@@ -387,9 +470,35 @@ class SiteController extends Controller
 
         if ($model !== null) {
             $model->status = 'Approved';
-            $model->updated_at = date('Y-m-d'); 
+            $model->updated_at = date('Y-m-d H:i:s'); 
 
             if ($model->save(false)) {
+                $approvedTime = date('Y-m-d H:i:s');
+                File::updateAll(
+                    ['approved_at' => $approvedTime],
+                    ['user_id' => $user_id, 'approved_at' => null]
+                );
+                Log::updateAll(
+                    ['approved_at' => $approvedTime],
+                    ['user_id' => $user_id, 'approved_at' => null]
+                ); 
+
+                // add activity log message
+                // pertama dari sisi admin
+                // kedua dari sisi user
+                $activity = new Activity();
+                $activity->user_id = Yii::$app->user->identity->id;
+                $activity->action_type = 'Approve';
+                $activity->notes = Yii::$app->user->identity->nama . " melakukan approval pada laporan milik " . 
+                (User::findOne($user_id)->nama ?? 'Tidak diketahui');
+                $activity->save();
+
+                $activity = new Activity();
+                $activity->user_id = $user_id;
+                $activity->action_type = 'Approve';
+                $activity->notes = "Laporan anda telah diapprove oleh " . Yii::$app->user->identity->nama; 
+                $activity->save();
+
                 Yii::$app->session->setFlash('success', 'Laporan berhasil disetujui.');
             } else {
                 Yii::$app->session->setFlash('error', 'Gagal menyetujui laporan.');
@@ -405,21 +514,45 @@ class SiteController extends Controller
     {
         $model = Laporan::findOne(['user_id' => $user_id]);
 
-        if ($model !== null) {
-            $model->status = 'Disapproved';
-            $model->updated_at = date('Y-m-d');
-
-            if ($model->save(false)) {
-                Yii::$app->session->setFlash('success', 'Laporan berhasil ditolak.');
-            } else {
-                Yii::$app->session->setFlash('error', 'Gagal menolak laporan.');
-            }
-        } else {
+        if (!$model) {
             Yii::$app->session->setFlash('error', 'Laporan tidak ditemukan.');
+            return $this->redirect(['index']);
         }
 
-        return $this->redirect(['index']);
+        $noteModel = new Notes();
+        $noteModel->user_id = $user_id;
+
+        if ($noteModel->load(Yii::$app->request->post()) && $noteModel->validate()) {
+            $noteModel->save(false);
+
+            // Update status laporan 
+            $model->status = 'Disapproved';
+            $model->updated_at = date('Y-m-d H:i:s');
+            $model->save(false);
+
+            // add activity log message
+            // pertama dari sisi admin
+            // kedua dari sisi user
+            $activity = new Activity();
+            $activity->user_id = Yii::$app->user->identity->id;
+            $activity->action_type = 'Disapprove';
+            $activity->notes = Yii::$app->user->identity->nama . " melakukan disapproval pada laporan milik " . 
+            (User::findOne($user_id)->nama ?? 'Tidak diketahui');
+            $activity->save();
+
+            $activity = new Activity();
+            $activity->user_id = $user_id;
+            $activity->action_type = 'Disapprove';
+            $activity->notes = "Laporan anda telah didisapprove oleh " . Yii::$app->user->identity->nama; 
+            $activity->save();
+
+            Yii::$app->session->setFlash('success', 'Notes disapproved telah ditambakan.');
+            return $this->redirect(['index']);
+        }
+        
+        return $this->render('tambahnote', ['model' => $noteModel]);
     }
+
 
     private function processCsvFile($filePath)
     {
@@ -461,6 +594,63 @@ class SiteController extends Controller
 
             // Simpan data ke database
             $logModel->save();
+        }
+
+        fclose($fileHandle);
+    }
+
+    private function processTxtFile($filePath)
+    {
+        if (!file_exists($filePath)) {
+            return;
+        }
+
+        $fileHandle = fopen($filePath, 'rb'); // Gunakan 'rb' untuk membaca dengan benar
+        if ($fileHandle === false) {
+            return;
+        }
+
+        $count = 0; // Inisialisasi penghitung
+
+        while (($line = fgets($fileHandle)) !== false) {
+            // Lewati jika baris kosong
+            if (empty($line)) {
+                continue;
+            }
+
+            // Pisahkan berdasarkan koma
+            $row = array_map('trim', explode(',', $line)); // Hapus spasi ekstra di setiap elemen
+            
+            // Pastikan jumlah kolom sesuai dengan format (minimal 4 kolom)
+            if (count($row) < 4) {
+                continue;
+            }
+
+            // Parsing tanggal dan waktu (perhatikan formatnya)
+            $tanggalWaktuObj = DateTime::createFromFormat('d/m/Y H:i:s', $row[0]);
+            $tanggalWaktu = $tanggalWaktuObj ? $tanggalWaktuObj->format('Y-m-d H:i:s') : null;
+
+            $tipe = $row[1];
+            $nama = $row[2];
+
+            // Ambil angka dari ukuran (hilangkan 'byte' di belakang)
+            $ukuran = (double) filter_var($row[3], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
+            // Tambahkan penghitung baris
+            $count++;
+
+            // Simpan ke model Log
+            $logModel = new Log();
+            $logModel->user_id = Yii::$app->user->id;
+            $logModel->tanggal_waktu = $tanggalWaktu;
+            $logModel->tipe = $tipe;
+            $logModel->nama = $nama;
+            $logModel->ukuran = $ukuran;
+
+            // Simpan data ke database
+            if (!$logModel->save()) {
+                var_dump("Gagal menyimpan:", $logModel->getErrors()); // Debug jika save() gagal
+            }
         }
 
         fclose($fileHandle);

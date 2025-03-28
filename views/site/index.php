@@ -114,7 +114,7 @@ date_default_timezone_set('Asia/Jakarta');
                                                     <i class="fa fa-times-circle"></i> Disapproved
                                                 </span>';
                                 $statusText = "<small><i class='fa fa-calendar'></i> Disapproved at: $updatedAt</small>
-                                               <br><small><i class='fa fa-exclamation-circle'></i> Check notes</small>";
+                                               <br><small><i class='fa fa-exclamation-circle'></i> Cek catatan admin</small>";
                                 break;
                             default:
                                 $statusLabel = '<span class="label label-default">
@@ -128,7 +128,7 @@ date_default_timezone_set('Asia/Jakarta');
                     }
                 ],                                                                          
                 [
-                    'label' => 'Action',
+                    'label' => 'Aksi',
                     'format' => 'raw',
                     'value' => function ($model) {
                         $buttons = '';
@@ -142,13 +142,23 @@ date_default_timezone_set('Asia/Jakarta');
                             $buttons .= Html::a(
                                 '<i class="fa fa-check"></i> Approve',
                                 ['approve', 'user_id' => $model->user_id],
-                                ['class' => 'btn btn-success btn-sm']
+                                ['class' => 'btn btn-success btn-sm',
+                                    'data' => [
+                                        'confirm' => 'Apakah Anda yakin ingin menyetujui laporan ini?',
+                                        'method' => 'post',
+                                    ],
+                                ]
                             ) . ' ';
                         
                             $buttons .= Html::a(
                                 '<i class="fa fa-times"></i> Disapprove',
                                 ['disapprove', 'user_id' => $model->user_id],
-                                ['class' => 'btn btn-danger btn-sm']
+                                ['class' => 'btn btn-danger btn-sm',
+                                    'data' => [
+                                        'confirm' => 'Apakah Anda yakin ingin menolak laporan ini?',
+                                        'method' => 'post',
+                                    ],
+                                ]
                             ) . ' ';
                         }                        
                 

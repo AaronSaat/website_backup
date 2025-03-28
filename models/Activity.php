@@ -5,19 +5,17 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "log".
+ * This is the model class for table "activity".
  *
  * @property int $id
  * @property int $user_id
- * @property string|null $tanggal_waktu
- * @property string $tipe
- * @property string $nama
- * @property float|null $ukuran
- * @property string|null $approved_at
+ * @property string $action_type
+ * @property string $notes
+ * @property string|null $created_at
  *
  * @property User $user
  */
-class Log extends \yii\db\ActiveRecord
+class Activity extends \yii\db\ActiveRecord
 {
 
 
@@ -26,7 +24,7 @@ class Log extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'log';
+        return 'activity';
     }
 
     /**
@@ -35,13 +33,11 @@ class Log extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['ukuran', 'approved_at'], 'default', 'value' => null],
-            [['user_id', 'tipe', 'nama'], 'required'],
+            [['user_id', 'action_type', 'notes'], 'required'],
             [['user_id'], 'integer'],
-            [['tanggal_waktu', 'approved_at'], 'safe'],
-            [['ukuran'], 'number'],
-            [['tipe'], 'string', 'max' => 50],
-            [['nama'], 'string', 'max' => 255],
+            [['notes'], 'string'],
+            [['created_at'], 'safe'],
+            [['action_type'], 'string', 'max' => 50],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
@@ -54,11 +50,9 @@ class Log extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'user_id' => 'User ID',
-            'tanggal_waktu' => 'Tanggal Waktu',
-            'tipe' => 'Tipe',
-            'nama' => 'Nama',
-            'ukuran' => 'Ukuran',
-            'approved_at' => 'Approved At',
+            'action_type' => 'Action Type',
+            'notes' => 'Notes',
+            'created_at' => 'Created At',
         ];
     }
 

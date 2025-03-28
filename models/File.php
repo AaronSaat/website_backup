@@ -10,8 +10,9 @@ use Yii;
  * @property int $id
  * @property int $user_id
  * @property string $direktori_file
- * @property string $created_at
- * @property string $tipe
+ * @property string|null $created_at
+ * @property string|null $approved_at
+ * @property string|null $tipe
  *
  * @property User $user
  */
@@ -25,6 +26,7 @@ class File extends \yii\db\ActiveRecord
     const TIPE_PNG = 'png';
     const TIPE_JPEG = 'jpeg';
     const TIPE_CSV = 'csv';
+    const TIPE_TXT = 'txt';
 
     /**
      * {@inheritdoc}
@@ -40,9 +42,10 @@ class File extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'direktori_file', 'tipe'], 'required'],
+            [['created_at', 'approved_at', 'tipe'], 'default', 'value' => null],
+            [['user_id', 'direktori_file'], 'required'],
             [['user_id'], 'integer'],
-            [['created_at'], 'safe'],
+            [['created_at', 'approved_at'], 'safe'],
             [['tipe'], 'string'],
             [['direktori_file'], 'string', 'max' => 255],
             ['tipe', 'in', 'range' => array_keys(self::optsTipe())],
@@ -60,6 +63,7 @@ class File extends \yii\db\ActiveRecord
             'user_id' => 'User ID',
             'direktori_file' => 'Direktori File',
             'created_at' => 'Created At',
+            'approved_at' => 'Approved At',
             'tipe' => 'Tipe',
         ];
     }
@@ -86,6 +90,7 @@ class File extends \yii\db\ActiveRecord
             self::TIPE_PNG => 'png',
             self::TIPE_JPEG => 'jpeg',
             self::TIPE_CSV => 'csv',
+            self::TIPE_TXT => 'txt',
         ];
     }
 
@@ -147,5 +152,18 @@ class File extends \yii\db\ActiveRecord
     public function setTipeToCsv()
     {
         $this->tipe = self::TIPE_CSV;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTipeTxt()
+    {
+        return $this->tipe === self::TIPE_TXT;
+    }
+
+    public function setTipeToTxt()
+    {
+        $this->tipe = self::TIPE_TXT;
     }
 }

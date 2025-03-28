@@ -45,6 +45,8 @@ use yii\helpers\Html;
                 Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
                     ['label' => '<i class="fa fa-tags"></i> Lihat Daftar Kategori', 'url' => ['/kategori/daftarkategori']] : null,
 
+                Yii::$app->user->identity ? 
+                    ['label' => '<i class="fa fa-history"></i> Lihat Daftar Aktivitas', 'url' => ['/activity/daftaractivity']] : null,
 
                 Yii::$app->user->identity ?
                 ['label' => '<i class="fa fa-plus-square"></i> Tambah Laporan', 'url' => ['/site/tambahlaporan']] : null,

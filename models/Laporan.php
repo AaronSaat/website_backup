@@ -69,6 +69,11 @@ class Laporan extends \yii\db\ActiveRecord
         return $this->hasMany(File::class, ['user_id' => 'user_id']);
     }
 
+    public function getNote()
+    {
+        return $this->hasOne(Notes::class, ['user_id' => 'user_id'])->orderBy(['created_at' => SORT_DESC]);
+    }
+
     public function beforeSave($insert)
     {
         if (empty($this->tanggal_backup)) {
@@ -76,5 +81,4 @@ class Laporan extends \yii\db\ActiveRecord
         }
         return parent::beforeSave($insert);
     }
-
 }

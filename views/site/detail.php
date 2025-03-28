@@ -4,6 +4,7 @@ use yii\widgets\DetailView;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use app\models\Kategori; 
+use yii\widgets\LinkPager;
 
 /** @var $model app\models\Laporan */
 /** @var $files app\models\File[] */
@@ -14,7 +15,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Laporan', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
 $user = Yii::$app->user->identity;
-$isAdmin = $user->username === 'admin';
+$isAdmin = isset($user) && $user->username === 'admin';
 $isOwner = $model->user_id === $user->id;
 
 // Ambil daftar kategori dari database
@@ -24,6 +25,32 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
     <div class="box-header with-border">
         <h3 class="box-title"><?= Html::encode($this->title) ?></h3>
         <div class="pull-right">
+            <?php if ($isAdmin && $model->status === 'Waiting for Approval'): ?>
+                <?= Html::a('<i class="fa fa-check"></i> Approve', ['approve', 'user_id' => $model->user_id], [
+                    'class' => 'btn btn-success',
+                    'data' => [
+                        'confirm' => 'Apakah Anda yakin ingin menyetujui laporan ini?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+                <?= Html::a('<i class="fa fa-times"></i> Disapprove', ['disapprove', 'user_id' => $model->user_id], [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Apakah Anda yakin ingin menolak laporan ini?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php endif; ?>
+
+            <?php if ($isAdmin): ?>
+                <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['delete', 'user_id' => $model->user_id], [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Apakah Anda yakin ingin menghapus laporan ini?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php endif; ?>
             <?= Html::a('<i class="fa fa-plus"></i> Tambah Laporan', ['site/tambahlaporan'], ['class' => 'btn btn-primary']) ?>
         </div>
     </div>
@@ -31,7 +58,6 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
         <?= DetailView::widget([
             'model' => $model,
             'attributes' => [
-                'id',
                 [
                     'label' => 'Nama',
                     'value' => $model->user->nama,
@@ -62,38 +88,112 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                     },
                 ],                                                                             
                 [
+                    'attribute' => 'status',
                     'label' => 'Status',
                     'format' => 'raw',
-                    'value' => function ($model) {
-                        $icon = '';
+                    'value' => function($model) {
+                        $updatedAt = $model->updated_at ? date('d-m-Y H:i:s', strtotime($model->updated_at)) : '-';
+                
                         switch ($model->status) {
                             case 'Approved':
-                                $statusClass = 'success';
-                                $icon = '<i class="fa fa-check-circle"></i> ';
+                                $statusLabel = '<span class="label label-success">
+                                                    <i class="fa fa-check-circle"></i> Approved
+                                                </span>';
+                                $statusText = "<small><i class='fa fa-calendar-check'></i> Approved at: $updatedAt</small>";
                                 break;
+                
                             case 'Waiting for Approval':
-                                $statusClass = 'warning';
-                                $icon = '<i class="fa fa-clock-o"></i> ';
+                                $statusLabel = '<span class="label label-warning">
+                                                    <i class="fa fa-clock-o"></i> Waiting for Approval
+                                                </span>';
+                                $statusText = "<small><i class='fa fa-calendar'></i> Updated at: $updatedAt</small>";
                                 break;
+                
                             case 'Disapproved':
-                                $statusClass = 'danger';
-                                $icon = '<i class="fa fa-times-circle"></i> ';
+                                $statusLabel = '<span class="label label-danger">
+                                                    <i class="fa fa-times-circle"></i> Disapproved
+                                                </span>';
+                                $statusText = "<small><i class='fa fa-calendar'></i> Disapproved at: $updatedAt</small>";
                                 break;
+                
                             default:
-                                $statusClass = 'default';
-                                $icon = '<i class="fa fa-question-circle"></i> ';
+                                $statusLabel = '<span class="label label-default">
+                                                    <i class="fa fa-question-circle"></i> Unknown
+                                                </span>';
+                                $statusText = "<small><i class='fa fa-calendar'></i> Updated at: $updatedAt</small>";
                                 break;
                         }
                 
-                        $statusLabel = "<span class='label label-{$statusClass}'>" . $icon . Html::encode($model->status) . "</span>";
-                        $updatedAt = $model->updated_at ? "<br><i class='fa fa-calendar'></i><small> Updated: " . date('d-m-Y', strtotime($model->updated_at)) . "</small>" : '';
-                        $adminNotes = $model->status === 'Disapproved' ? "<br><small>Check admin notes</small>" : '';
-                
-                        return $statusLabel . $updatedAt . $adminNotes;
-                    },
+                        return "$statusLabel<br>$statusText";
+                    }
                 ],                
+                [
+                    'label' => 'Catatan Admin',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        return Html::tag('div', 
+                            '<strong>Catatan Admin:</strong> ' . Html::encode($model->note->notes) . 
+                            '<br><small>Ditambahkan pada: ' . date('d-m-Y H:i', strtotime($model->note->created_at)) . '</small>',
+                            ['class' => 'alert alert-danger']
+                        );
+                    },
+                    'visible' => ($model->status === 'Disapproved' && isset($model->note->notes)), // Menyembunyikan atribut jika tidak memenuhi kondisi
+                ],                                                                         
             ],
         ]) ?>
+
+        <!-- Tabel Log -->
+        <div id="log-table">
+        <h4>Daftar Log</h4>
+        <small class="text-danger font-weight-bold">*macOS membulatkan ukuran file ke atas agar lebih mudah dibaca oleh pengguna. Lihat ukuran byte untuk mengetahui ukuran file asli</small>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal & Waktu</th>
+                        <th>Tipe</th>
+                        <th>Nama</th>
+                        <th>Ukuran (Byte)</th>
+                        <th>Ukuran (KB)</th>
+                        <th>Ukuran (MB)</th>
+                        <th>Tanggal di Approve</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($logs as $index => $log): ?>
+                        <tr id="log-row-<?= $log->id ?>">
+                            <td><?= $index + 1 ?></td>
+                            <td><?= Yii::$app->formatter->asDatetime($log->tanggal_waktu, 'php:l, d F Y H:i:s') ?></td>
+                            <td><?= Html::encode($log->tipe) ?></td>
+                            <td><?= Html::encode($log->nama) ?></td>
+                            <td><?= number_format($log->ukuran, 2, ',', '') . ' byte' ?></td>
+                            <td><?= number_format($log->ukuran / 1024, 2, ',', '') . ' KB' ?></td>
+                            <td><?= number_format($log->ukuran / 1048576, 8, ',', '') . ' MB' ?></td>
+                            <td>
+                                <?php if (!empty($log->approved_at)): ?>
+                                    <?= Yii::$app->formatter->asDatetime($log->approved_at, 'php:l, d F Y H:i:s') ?>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($isAdmin || ($isOwner && in_array($file->status, ['Waiting for Approval', 'Disapprove']))): ?> 
+                                    <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletelog', 'id' => $log->id], [
+                                        'class' => 'btn btn-danger btn-sm',
+                                        'data' => [
+                                            'confirm' => 'Yakin ingin menghapus log ini?',
+                                            'method' => 'post',
+                                        ],
+                                    ]) ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?= LinkPager::widget(['pagination' => $paginationLogs]) ?>
+        </div>
 
         <!-- Tabel File -->
         <div id="file-table">
@@ -128,7 +228,8 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                         <th>No</th>
                         <th>Direktori File</th>
                         <th>Tipe</th>
-                        <th>Created At</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Tanggal di Approve</th> <!-- Tambahan Kolom -->
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -145,7 +246,14 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                                 ?>
                             </td>
                             <td>
-                                <?php if (in_array($file->tipe, ['jpg', 'jpeg', 'png'])): ?>
+                                <?php if (!empty($file->approved_at)): ?>
+                                    <?= strftime('%A, %d %B %Y %H:%M:%S', strtotime($file->approved_at)) ?>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (in_array($file->tipe, ['jpg', 'jpeg', 'png', 'txt'])): ?>
                                     <?= Html::a('<i class="fa fa-eye"></i> View', Url::to('@web/' . $file->direktori_file), [
                                         'class' => 'btn btn-primary btn-sm',
                                         'target' => '_blank'
@@ -156,8 +264,8 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                                         'download' => true
                                     ]) ?>
                                 <?php endif; ?>
-                                
-                                <?php if ($isAdmin || $isOwner): ?>
+
+                                <?php if ($isAdmin || ($isOwner && in_array($model->status, ['Waiting for Approval', 'Disapprove']))): ?> 
                                     <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletefile', 'id' => $file->id], [
                                         'class' => 'btn btn-danger btn-sm',
                                         'data' => [
@@ -171,45 +279,7 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Tabel Log -->
-        <div id="log-table">
-            <h4>Daftar Log</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Tanggal & Waktu</th>
-                        <th>Tipe</th>
-                        <th>Nama</th>
-                        <th>Ukuran</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($logs as $index => $log): ?>
-                        <tr id="log-row-<?= $log->id ?>">
-                            <td><?= $index + 1 ?></td>
-                            <td><?= Yii::$app->formatter->asDatetime($log->tanggal_waktu, 'php:l, d F Y H:i') ?></td>
-                            <td><?= Html::encode($log->tipe) ?></td>
-                            <td><?= Html::encode($log->nama) ?></td>
-                            <td><?= number_format($log->ukuran, 2, ',', '') . ' KB' ?></td>
-                            <td>
-                                <?php if ($isAdmin || $isOwner): ?>
-                                    <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletelog', 'id' => $log->id], [
-                                        'class' => 'btn btn-danger btn-sm',
-                                        'data' => [
-                                            'confirm' => 'Yakin ingin menghapus log ini?',
-                                            'method' => 'post',
-                                        ],
-                                    ]) ?>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?= LinkPager::widget(['pagination' => $paginationFiles]) ?>
         </div>
 
     </div>
