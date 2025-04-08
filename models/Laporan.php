@@ -19,6 +19,7 @@ use Yii;
 class Laporan extends \yii\db\ActiveRecord
 {
 
+    public $kategori_id;
 
     /**
      * {@inheritdoc}
@@ -41,6 +42,7 @@ class Laporan extends \yii\db\ActiveRecord
             [['tanggal_backup', 'created_at', 'updated_at'], 'safe'],
             [['status'], 'string', 'max' => 255],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['kategori_id'], 'integer'],
         ];
     }
 

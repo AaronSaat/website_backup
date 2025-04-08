@@ -229,17 +229,9 @@ function formatTanggalIndonesia($tanggal) {
             <?= LinkPager::widget(['pagination' => $paginationLogs]) ?>
         </div>
 
-        <!-- Tabel File -->
-        <div id="file-table">
-            <h4 class="mb-0">Daftar File</h4>
-            <div class="d-flex align-items-center">
-                <label for="filter-file" class="mr-2 mb-0">Filter File:</label>
-                <select id="filter-file" class="form-control" style="width: 200px;">
-                    <option value="all">Semua</option>
-                    <option value="image">Image (JPG, PNG, JPEG)</option>
-                    <option value="csv">CSV</option>
-                </select>
-            </div>
+        <!-- Tabel File Google Drive -->
+        <div id="drive-table">
+            <h4 class="mb-0">Daftar File Google Drive</h4>
 
             <!-- kalau mau di ujung kanan, tapi kurang bagus -->
             <!-- <div class="row align-items-center">
@@ -268,20 +260,17 @@ function formatTanggalIndonesia($tanggal) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($files as $index => $file): ?>
+                    <?php foreach ($filesDrive as $index => $file): ?>
                         <tr class="file-row" data-type="<?= Html::encode($file->tipe) ?>" id="file-row-<?= $file->id ?>">
                             <td><?= $index + 1 ?></td>
                             <td><?= Html::encode(str_replace('uploads/', '', $file->direktori_file)) ?></td>
                             <td><?= Html::encode($file->tipe) ?></td>
                             <td>
-                                <?php 
-                                    setlocale(LC_TIME, 'id_ID.UTF-8', 'Indonesian_indonesia.1252'); 
-                                    echo strftime('%A, %d %B %Y', strtotime($file->created_at)); 
-                                ?>
+                                <?= Yii::$app->formatter->asDate($file->created_at, 'php:l, d F Y') ?>
                             </td>
                             <td>
                                 <?php if (!empty($file->approved_at)): ?>
-                                    <?= strftime('%A, %d %B %Y %H:%M:%S', strtotime($file->approved_at)) ?>
+                                    <?= Yii::$app->formatter->asDatetime($file->approved_at, 'php:l, d F Y H:i:s') ?>
                                 <?php else: ?>
                                     <span class="text-muted">-</span>
                                 <?php endif; ?>
@@ -313,7 +302,68 @@ function formatTanggalIndonesia($tanggal) {
                     <?php endforeach; ?>
                 </tbody>
             </table>
-            <?= LinkPager::widget(['pagination' => $paginationFiles]) ?>
+            <?= LinkPager::widget(['pagination' => $paginationDrive]) ?>
+        </div>
+
+        <!-- Tabel File Nas -->
+        <div id="nas-table">
+            <h4 class="mb-0">Daftar File NAS</h4>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Direktori File</th>
+                        <th>Tipe</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Tanggal di Approve</th> <!-- Tambahan Kolom -->
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($filesNas as $index => $file): ?>
+                        <tr class="file-row" data-type="<?= Html::encode($file->tipe) ?>" id="file-row-<?= $file->id ?>">
+                            <td><?= $index + 1 ?></td>
+                            <td><?= Html::encode(str_replace('uploads/', '', $file->direktori_file)) ?></td>
+                            <td><?= Html::encode($file->tipe) ?></td>
+                            <td>
+                                <?= Yii::$app->formatter->asDate($file->created_at, 'php:l, d F Y') ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($file->approved_at)): ?>
+                                    <?= Yii::$app->formatter->asDatetime($file->approved_at, 'php:l, d F Y H:i:s') ?>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (in_array($file->tipe, ['jpg', 'jpeg', 'png', 'txt'])): ?>
+                                    <?= Html::a('<i class="fa fa-eye"></i> View', Url::to('@web/' . $file->direktori_file), [
+                                        'class' => 'btn btn-primary btn-sm',
+                                        'target' => '_blank'
+                                    ]) ?>
+                                <?php elseif ($file->tipe === 'csv'): ?>
+                                    <?= Html::a('<i class="fa fa-download"></i> Download', Url::to('@web/' . $file->direktori_file), [
+                                        'class' => 'btn btn-success btn-sm',
+                                        'download' => true
+                                    ]) ?>
+                                <?php endif; ?>
+
+                                <?php if ($isAdmin || ($isOwner && empty($file->approved_at))): ?> 
+                                    <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletefile', 'id' => $file->id], [
+                                        'class' => 'btn btn-danger btn-sm',
+                                        'data' => [
+                                            'confirm' => 'Yakin ingin menghapus file ini?',
+                                            'method' => 'post',
+                                        ],
+                                    ]) ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?= LinkPager::widget(['pagination' => $paginationNas]) ?>
         </div>
 
     </div>
@@ -328,13 +378,19 @@ function formatTanggalIndonesia($tanggal) {
             function toggleTables() {
                 var selectedKategori = $('#kategori-select option:selected').text();
                 if (selectedKategori === 'Google Drive') {
-                    $('#file-table').removeClass('hidden');
+                    $('#drive-table').removeClass('hidden');
                     $('#log-table').addClass('hidden');
-                } else if (selectedKategori === 'HDD / SSD') {
+                    $('#nas-table').addClass('hidden');
+                } else if (selectedKategori === 'Local') {
                     $('#log-table').removeClass('hidden');
-                    $('#file-table').addClass('hidden');
+                    $('#drive-table').addClass('hidden');
+                    $('#nas-table').addClass('hidden');
+                } else if (selectedKategori === 'NAS') {
+                    $('#nas-table').removeClass('hidden');
+                    $('#drive-table').addClass('hidden');
+                    $('#log-table').addClass('hidden');
                 } else {
-                    $('#file-table, #log-table').addClass('hidden');
+                    $('#drive-table, #log-table, #nas-table').addClass('hidden');
                 }
             }
             
@@ -343,24 +399,6 @@ function formatTanggalIndonesia($tanggal) {
             });
 
             toggleTables();
-        });
-
-        document.getElementById('filter-file').addEventListener('change', function() {
-            var selectedType = this.value;
-            var rows = document.querySelectorAll('.file-row');
-
-            rows.forEach(function(row) {
-                var fileType = row.getAttribute('data-type');
-                if (selectedType === 'all') {
-                    row.style.display = '';
-                } else if (selectedType === 'image' && ['jpg', 'jpeg', 'png'].includes(fileType)) {
-                    row.style.display = '';
-                } else if (selectedType === 'csv' && fileType === 'csv') {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
         });
     JS;
     $this->registerJs($script);

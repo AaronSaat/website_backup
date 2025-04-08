@@ -30,6 +30,7 @@ class ActivityController extends Controller
         if (!Yii::$app->user->can('activity')) {
             throw new \yii\web\ForbiddenHttpException('Anda belum login dan tidak punya izin untuk mengakses activity.');
         }
+        setlocale(LC_TIME, 'id_ID.UTF-8');
         $userId = Yii::$app->user->id;
 
         $dataProvider = new ActiveDataProvider([

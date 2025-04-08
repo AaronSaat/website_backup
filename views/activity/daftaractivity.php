@@ -74,6 +74,9 @@ function formatTanggalIndonesia($tanggal) {
                             case 'Disapprove':
                                 $actionLabel = '<span class="label label-danger">Disapprove</span>';
                                 break;
+                            case 'Update':
+                                $actionLabel = '<span class="label label-info">Update</span>';
+                                break;
                             default:
                                 $actionLabel = '<span class="label label-default">Unknown</span>';
                                 break;

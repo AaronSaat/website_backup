@@ -8,6 +8,7 @@ use yii\filters\AccessControl;
 use yii\data\ActiveDataProvider;
 use app\models\User;
 use app\models\Activity;
+use app\models\BiroPekerjaan;
 use yii\web\NotFoundHttpException;
 
 class PenggunaController extends Controller
@@ -39,8 +40,15 @@ class PenggunaController extends Controller
         // Jika admin biasa, jangan tampilkan superadmin (id = 2)
         if (Yii::$app->user->can('admin') && !Yii::$app->user->can('superadmin')) {
             $query->where(['not in', 'id', [1, 2]]);
-        }        
+        }
 
+        $biroList = BiroPekerjaan::find()->asArray()->all();
+        $selectedBiro = Yii::$app->request->get('biro');
+
+        if ($selectedBiro) {
+            $query->andWhere(['user.biro_pekerjaan_id' => $selectedBiro]);
+        }
+        
         $dataProvider = new \yii\data\ActiveDataProvider([
             'query' => $query,
             'pagination' => ['pageSize' => 10],
@@ -48,6 +56,8 @@ class PenggunaController extends Controller
 
         return $this->render('daftarpengguna', [
             'dataProvider' => $dataProvider,
+            'biroList' => $biroList,
+            'selectedBiro' => $selectedBiro,
         ]);
     }
         
@@ -215,6 +225,13 @@ class PenggunaController extends Controller
         if ($user->load(Yii::$app->request->post()) && $user->validate()) {
             $user->password_hash = Yii::$app->security->generatePasswordHash($user->password);
             if ($user->save(false)) {
+                // log aktivitas
+                $activity = new Activity();
+                $activity->user_id = Yii::$app->user->identity->id;
+                $activity->action_type = 'Update';
+                $activity->notes = Yii::$app->user->identity->nama . " mengganti password akun";
+                $activity->save();
+
                 Yii::$app->session->setFlash('success', 'Password berhasil diganti.');
                 return $this->goHome();
             } else {

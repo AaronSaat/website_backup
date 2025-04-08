@@ -161,6 +161,7 @@ class SiteController extends Controller
         if (!Yii::$app->user->can('lihatLaporan')) {
             throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
         }
+
         $model = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan', 'note'])
             ->where(['laporan.user_id' => $user_id])
@@ -169,33 +170,50 @@ class SiteController extends Controller
         if (!$model) {
             throw new NotFoundHttpException('Data laporan tidak ditemukan.');
         }
-            
-        // $files = File::find()->where(['user_id' => $user_id])
-        //         ->orderBy(['created_at' => SORT_DESC])
-        //         ->all();
-        // $logs = Log::find()->where(['user_id' => $user_id])        
-        //         ->orderBy(['tanggal_waktu' => SORT_DESC])
-        //         ->all();
 
-        // Query untuk Files
-        $queryFiles = File::find()->where(['user_id' => $user_id])->orderBy(['created_at' => SORT_DESC]);
-        $countFiles = clone $queryFiles;
-        $paginationFiles = new Pagination(['totalCount' => $countFiles->count(), 'pageSize' => 50]); 
-        $files = $queryFiles->offset($paginationFiles->offset)->limit($paginationFiles->limit)->all();
+        // === File Google Drive (kategori_id = 2) ===
+        $queryFilesDrive = File::find()
+            ->where(['user_id' => $user_id, 'kategori_id' => 2])
+            ->orderBy(['created_at' => SORT_DESC]);
 
-        // Query untuk Logs
-        $queryLogs = Log::find()->where(['user_id' => $user_id])->orderBy(['tanggal_waktu' => SORT_DESC]);
-        $countLogs = clone $queryLogs;
-        $paginationLogs = new Pagination(['totalCount' => $countLogs->count(), 'pageSize' => 50]);
+        $paginationDrive = new Pagination([
+            'totalCount' => $queryFilesDrive->count(),
+            'pageSize' => 50
+        ]);
+        $filesDrive = $queryFilesDrive->offset($paginationDrive->offset)->limit($paginationDrive->limit)->all();
+
+        // === File NAS (kategori_id = 3) ===
+        $queryFilesNas = File::find()
+            ->where(['user_id' => $user_id, 'kategori_id' => 3])
+            ->orderBy(['created_at' => SORT_DESC]);
+
+        $paginationNas = new Pagination([
+            'totalCount' => $queryFilesNas->count(),
+            'pageSize' => 50
+        ]);
+        $filesNas = $queryFilesNas->offset($paginationNas->offset)->limit($paginationNas->limit)->all();
+
+        // === Log Aktivitas ===
+        $queryLogs = Log::find()
+            ->where(['user_id' => $user_id])
+            ->orderBy(['tanggal_waktu' => SORT_DESC]);
+
+        $paginationLogs = new Pagination([
+            'totalCount' => $queryLogs->count(),
+            'pageSize' => 50
+        ]);
         $logs = $queryLogs->offset($paginationLogs->offset)->limit($paginationLogs->limit)->all();
+
         $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori');
 
         return $this->render('detail', [
             'model' => $model,
             'logs' => $logs,
-            'files' => $files,
+            'filesDrive' => $filesDrive,
+            'filesNas' => $filesNas,
             'kategoriList' => $kategoriList,
-            'paginationFiles' => $paginationFiles,
+            'paginationDrive' => $paginationDrive,
+            'paginationNas' => $paginationNas,
             'paginationLogs' => $paginationLogs,
         ]);
     }
@@ -224,17 +242,43 @@ class SiteController extends Controller
             if (empty($model->tanggal_backup)) {
                 Yii::$app->session->setFlash('error', 'Tanggal backup harus diisi.');
                 return $this->render('tambahlaporan', ['model' => $model]);
-        }
+            }
 
             $model->tanggal_backup = Yii::$app->formatter->asDate($model->tanggal_backup, 'php:Y-m-d');
             $model->updated_at = date('Y-m-d H:i:s');
 
             if ($model->save()) {
+                if (empty($model->kategori_id)) {
+                    Yii::$app->session->setFlash('error', 'Kategori harus dipilih sebelum mengunggah file.');
+                    return $this->render('tambahlaporan', ['model' => $model]);
+                }
+
                 $uploadedFiles = UploadedFile::getInstances($model, 'files');
 
                 if (empty($uploadedFiles)) {
                     Yii::$app->session->setFlash('error', 'Tidak ada file yang diunggah.');
                     return $this->render('tambahlaporan', ['model' => $model]);
+                }
+
+                // VALIDASI FILE SESUAI KATEGORI
+                $kategori = $model->kategori_id;
+                $allowedCsvOnly = [1]; // ID kategori untuk 'Local'
+                $allowedImageOnly = [2, 3]; // ID kategori untuk 'Google Drive', 'NAS'
+
+                foreach ($uploadedFiles as $file) {
+                    $ext = strtolower($file->extension);
+                    
+                    // Validasi untuk kategori 'Local' (hanya CSV)
+                    if (in_array($kategori, $allowedCsvOnly) && $ext !== 'csv') {
+                        Yii::$app->session->setFlash('error', "Kategori 'Local' hanya mengizinkan file CSV.");
+                        return $this->render('tambahlaporan', ['model' => $model]);
+                    }
+
+                    // Validasi untuk kategori 'Google Drive' dan 'NAS' (hanya image)
+                    if (in_array($kategori, $allowedImageOnly) && !in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                        Yii::$app->session->setFlash('error', "Kategori ini hanya mengizinkan file gambar (JPG, PNG, JPEG).");
+                        return $this->render('tambahlaporan', ['model' => $model]);
+                    }
                 }
 
                 $uploadPath = Yii::getAlias('@webroot/uploads');
@@ -253,6 +297,7 @@ class SiteController extends Controller
                         $fileModel->user_id = Yii::$app->user->id;
                         $fileModel->direktori_file = 'uploads/' . $fileName;
                         $fileModel->tipe = $file->extension;
+                        $fileModel->kategori_id = $model->kategori_id;
                         $fileModel->created_at = $model->tanggal_backup;
 
                         if ($fileModel->save()) {

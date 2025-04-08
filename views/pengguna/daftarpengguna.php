@@ -12,6 +12,15 @@ $this->title = 'Daftar Pengguna';
     <div class="box-header with-border">
         <h3 class="box-title"><?= Html::encode($this->title) ?></h3>
         <div class="pull-right">
+            <label for="filter-biro" style="margin-right: 5px;">Filter Biro Pekerjaan:</label>
+            <select id="filter-biro" class="form-control" style="width: 200px; display: inline-block; margin-right: 15px;">
+                <option value="">Semua</option>
+                <?php foreach ($biroList as $biro): ?>
+                    <option value="<?= $biro['id'] ?>" <?= ($biro['id'] == $selectedBiro) ? 'selected' : '' ?>>
+                        <?= Html::encode($biro['nama']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
             <?= Html::a('<i class="fa fa-plus"></i> Tambah Pengguna', ['pengguna/tambahpengguna'], ['class' => 'btn btn-success']) ?>
         </div>
     </div>
@@ -72,3 +81,12 @@ $this->title = 'Daftar Pengguna';
         ]); ?>
     </div>
 </div>
+
+<script>
+    document.getElementById('filter-biro').addEventListener('change', function() {
+        const selectedBiro = this.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('biro', selectedBiro);
+        window.location.href = url.toString();
+    });
+</script>

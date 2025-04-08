@@ -9,6 +9,7 @@ use Yii;
  *
  * @property int $id
  * @property int $user_id
+ * @property int $kategori_id
  * @property string $direktori_file
  * @property string|null $created_at
  * @property string|null $approved_at
@@ -43,12 +44,13 @@ class File extends \yii\db\ActiveRecord
     {
         return [
             [['created_at', 'approved_at', 'tipe'], 'default', 'value' => null],
-            [['user_id', 'direktori_file'], 'required'],
-            [['user_id'], 'integer'],
+            [['user_id', 'kategori_id', 'direktori_file'], 'required'],
+            [['user_id', 'kategori_id'], 'integer'],
             [['created_at', 'approved_at'], 'safe'],
             [['tipe'], 'string'],
             [['direktori_file'], 'string', 'max' => 255],
             ['tipe', 'in', 'range' => array_keys(self::optsTipe())],
+            [['kategori_id'], 'exist', 'skipOnError' => true, 'targetClass' => Kategori::class, 'targetAttribute' => ['kategori_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
@@ -61,6 +63,7 @@ class File extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'user_id' => 'User ID',
+            'kategori_id' => 'Kategori',
             'direktori_file' => 'Direktori File',
             'created_at' => 'Created At',
             'approved_at' => 'Approved At',
@@ -78,6 +81,15 @@ class File extends \yii\db\ActiveRecord
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
+    /**
+     * Gets query for [[Kategori]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getKategori()
+    {
+        return $this->hasOne(Kategori::class, ['id' => 'kategori_id']);
+    }
 
     /**
      * column tipe ENUM value labels

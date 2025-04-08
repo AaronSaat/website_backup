@@ -45,6 +45,13 @@ $this->title = 'Tambah Laporan Baru';
         ]) ?>
     </div>
     
+    <div class="form-group">
+        <?= $form->field($model, 'kategori_id')->dropDownList(
+            ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori'),
+            ['prompt' => 'Pilih Kategori']
+        ) ?> 
+    </div>
+    
     <!-- Upload File (Maksimal .. file, max 10MB) -->
     <div class="form-group">
         <?= $form->field($model, 'files[]')->widget(FileInput::class, [
