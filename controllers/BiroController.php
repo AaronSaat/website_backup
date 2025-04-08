@@ -17,18 +17,11 @@ class BiroController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['index', 'tambahlaporan'], // Halaman yang ingin dibatasi aksesnya
                 'rules' => [
                     [
                         'allow' => true,
-                        'roles' => ['@'], // Hanya untuk pengguna yang sudah login
-                    ],
-                    [
-                        'allow' => false,
-                        'roles' => ['?'], // Jika guest, maka redirect ke login
-                        'denyCallback' => function ($rule, $action) {
-                            return Yii::$app->response->redirect(['site/login']);
-                        },
+                        // 'roles' => ['@'], 
+                        'roles' => ['admin'], 
                     ],
                 ],
             ],
@@ -37,6 +30,9 @@ class BiroController extends Controller
 
     public function actionDaftarbiro()
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses biro pekerjaan.');
+        }
         $dataProvider = new ActiveDataProvider([
             'query' => BiroPekerjaan::find(),
             'pagination' => ['pageSize' => 10],
@@ -49,6 +45,9 @@ class BiroController extends Controller
 
     public function actionTambahbiro()
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses biro pekerjaan.');
+        }
         $model = new BiroPekerjaan();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -80,6 +79,9 @@ class BiroController extends Controller
 
     public function actionDelete($id)
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses biro pekerjaan.');
+        }
         $model = BiroPekerjaan::findOne($id);
         if ($model) {
             $namaBiro = $model->nama; 

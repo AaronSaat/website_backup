@@ -34,14 +34,7 @@ class SiteController extends Controller
                 'rules' => [
                     [
                         'allow' => true,
-                        'roles' => ['@'], // Hanya untuk pengguna yang sudah login
-                    ],
-                    [
-                        'allow' => false,
-                        'roles' => ['?'], // Jika guest, maka redirect ke login
-                        'denyCallback' => function ($rule, $action) {
-                            return Yii::$app->response->redirect(['site/login']);
-                        },
+                        'roles' => ['@'], 
                     ],
                 ],
             ],
@@ -63,7 +56,9 @@ class SiteController extends Controller
 
     public function actionIndex()
     {
-
+        if (!Yii::$app->user->can('lihatLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
         $query = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan'])
             ->orderBy(['created_at' => SORT_DESC]);
@@ -163,6 +158,9 @@ class SiteController extends Controller
 
     public function actionView($user_id)
     {
+        if (!Yii::$app->user->can('lihatLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
         $model = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan', 'note'])
             ->where(['laporan.user_id' => $user_id])
@@ -204,6 +202,9 @@ class SiteController extends Controller
 
     public function actionTambahlaporan()
     {
+        if (!Yii::$app->user->can('tambahLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
         date_default_timezone_set('Asia/Jakarta'); 
 
         $model = Laporan::findOne(['user_id' => Yii::$app->user->id]);
@@ -213,20 +214,20 @@ class SiteController extends Controller
             $model = new Laporan();
             $model->user_id = Yii::$app->user->id;
             $model->status = 'Waiting for Approval'; 
-            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
+            $model->updated_at = date('Y-m-d H:i:s');
         } else {
             $model->status = 'Waiting for Approval';
-            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
+            $model->updated_at = date('Y-m-d H:i:s');
         }
 
         if ($model->load(Yii::$app->request->post())) {
             if (empty($model->tanggal_backup)) {
                 Yii::$app->session->setFlash('error', 'Tanggal backup harus diisi.');
                 return $this->render('tambahlaporan', ['model' => $model]);
-            }
+        }
 
             $model->tanggal_backup = Yii::$app->formatter->asDate($model->tanggal_backup, 'php:Y-m-d');
-            $model->updated_at = Yii::$app->formatter->asDatetime($model->tanggal_backup, 'php:Y-m-d H:i:s');
+            $model->updated_at = date('Y-m-d H:i:s');
 
             if ($model->save()) {
                 $uploadedFiles = UploadedFile::getInstances($model, 'files');
@@ -339,6 +340,13 @@ class SiteController extends Controller
 
     public function actionDelete($user_id)
     {
+        if (!Yii::$app->user->can('hapusLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
+        if (!Yii::$app->user->can('hapusLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
         $model = Laporan::findOne(['user_id' => $user_id]);
 
         if ($model === null) {
@@ -395,6 +403,10 @@ class SiteController extends Controller
 
     public function actionDeletefile($id)
     {
+        if (!Yii::$app->user->can('hapusFileLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
         $file = File::findOne($id);
 
         if ($file) {
@@ -425,6 +437,10 @@ class SiteController extends Controller
 
     public function actionDeletelog($id)
     {
+        if (!Yii::$app->user->can('hapusLogLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
         $log = Log::findOne($id);
 
         if ($log) {
@@ -467,6 +483,14 @@ class SiteController extends Controller
     
     public function actionApprove($user_id)
     {
+        if (!Yii::$app->user->can('approveLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
+        if (!Yii::$app->user->can('approveLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
         $model = Laporan::findOne(['user_id' => $user_id]);
 
         if ($model !== null) {
@@ -513,6 +537,10 @@ class SiteController extends Controller
 
     public function actionDisapprove($user_id)
     {
+        if (!Yii::$app->user->can('disapproveLaporan')) {
+            throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
+        }
+
         $model = Laporan::findOne(['user_id' => $user_id]);
 
         if (!$model) {

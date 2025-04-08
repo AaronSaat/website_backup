@@ -15,11 +15,10 @@ class ActivityController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index'],
                 'rules' => [
                     [
                         'allow' => true,
-                        'roles' => ['@'], // Hanya untuk user yang login
+                        'roles' => ['@'],
                     ],
                 ],
             ],
@@ -28,6 +27,9 @@ class ActivityController extends Controller
 
     public function actionDaftaractivity()
     {
+        if (!Yii::$app->user->can('activity')) {
+            throw new \yii\web\ForbiddenHttpException('Anda belum login dan tidak punya izin untuk mengakses activity.');
+        }
         $userId = Yii::$app->user->id;
 
         $dataProvider = new ActiveDataProvider([

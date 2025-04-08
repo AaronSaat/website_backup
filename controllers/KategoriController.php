@@ -17,18 +17,11 @@ class KategoriController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['index', 'tambahlaporan'], // Halaman yang ingin dibatasi aksesnya
                 'rules' => [
                     [
                         'allow' => true,
-                        'roles' => ['@'], // Hanya untuk pengguna yang sudah login
-                    ],
-                    [
-                        'allow' => false,
-                        'roles' => ['?'], // Jika guest, maka redirect ke login
-                        'denyCallback' => function ($rule, $action) {
-                            return Yii::$app->response->redirect(['site/login']);
-                        },
+                        // 'roles' => ['@'], 
+                        'roles' => ['admin'], 
                     ],
                 ],
             ],
@@ -37,6 +30,9 @@ class KategoriController extends Controller
 
     public function actionDaftarkategori()
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses kategori.');
+        }
         $dataProvider = new ActiveDataProvider([
             'query' => Kategori::find(),
             'pagination' => ['pageSize' => 10],
@@ -49,6 +45,9 @@ class KategoriController extends Controller
 
     public function actionTambahkategori()
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses kategori.');
+        }
         $model = new Kategori();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -80,6 +79,9 @@ class KategoriController extends Controller
 
     public function actionDelete($id)
     {
+        if (!Yii::$app->user->can('admin')) {
+            throw new \yii\web\ForbiddenHttpException('Anda bukan admin dan tidak punya izin untuk mengakses kategori.');
+        }
         $model = Kategori::findOne($id);
         if ($model) {
             $namaKategori = $model->nama_kategori; 

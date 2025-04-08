@@ -4,7 +4,42 @@ use yii\grid\GridView;
 use yii\helpers\Html;
 
 $this->title = 'Activity Log';
-$this->params['breadcrumbs'][] = $this->title;
+
+function formatTanggalIndonesia($tanggal) {
+    $hari = [
+        'Sunday' => 'Minggu',
+        'Monday' => 'Senin',
+        'Tuesday' => 'Selasa',
+        'Wednesday' => 'Rabu',
+        'Thursday' => 'Kamis',
+        'Friday' => 'Jumat',
+        'Saturday' => 'Sabtu',
+    ];
+
+    $bulan = [
+        '01' => 'Januari',
+        '02' => 'Februari',
+        '03' => 'Maret',
+        '04' => 'April',
+        '05' => 'Mei',
+        '06' => 'Juni',
+        '07' => 'Juli',
+        '08' => 'Agustus',
+        '09' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember',
+    ];
+
+    $timestamp = strtotime($tanggal);
+    $namaHari = $hari[date('l', $timestamp)];
+    $tgl = date('d', $timestamp);
+    $bln = date('m', $timestamp);
+    $thn = date('Y', $timestamp);
+    $waktu = date('H:i:s', $timestamp); // Tambahan waktu jam:menit:detik
+
+    return $namaHari . ', ' . $tgl . ' ' . $bulan[$bln] . ' ' . $thn . ' ' . $waktu;
+}
 ?>
 
 <div class="card">
@@ -56,8 +91,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     'attribute' => 'created_at',
                     'label' => 'Hari, Tanggal, Waktu',
                     'value' => function ($model) {
-                        setlocale(LC_TIME, 'id_ID.UTF-8', 'Indonesian_indonesia.1252');
-                        return strftime('%A, %d %B %Y %H:%M:%S', strtotime($model->created_at));
+                        return formatTanggalIndonesia($model->created_at);
                     },
                 ],                                
             ],

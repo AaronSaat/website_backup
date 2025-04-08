@@ -7,7 +7,7 @@ $this->title = 'Sign In';
 
 <div class="login-box">
     <div class="login-logo">
-        <a href="#"><b>Website Backup</b></a>
+        <a href="#"><b>Backup Log</b></a>
     </div>
     <div class="login-box-body">
         <?php if (Yii::$app->session->hasFlash('error')): ?>
@@ -21,8 +21,9 @@ $this->title = 'Sign In';
         <?= $form->field($model, 'username')->textInput(['placeholder' => 'Username']) ?>
         <?= $form->field($model, 'password')->passwordInput(['placeholder' => 'Password']) ?>
 
+
         <div class="form-group">
-            <?= Html::submitButton('Masuk', ['class' => 'btn btn-primary btn-block btn-flat', 'name' => 'login-button']) ?>
+            <?= Html::submitButton('Masuk', ['class' => 'btn btn-danger btn-block btn-flat', 'name' => 'login-button']) ?>
         </div>
 
         <?php ActiveForm::end(); ?>

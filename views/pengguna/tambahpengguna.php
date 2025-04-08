@@ -2,8 +2,26 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use app\models\BiroPekerjaan;
+use yii\web\JsExpression;
 
 $this->title = 'Tambah Pengguna Baru';
+
+$this->registerJs(
+    '
+    $("#generate-password").on("click", function() {
+        var passwordLength = 6;
+        var characters = "abcdefghijklmnopqrstuvwxyz";
+        var password = "";
+        for (var i = 0; i < passwordLength; i++) {
+            var randomIndex = Math.floor(Math.random() * characters.length);
+            password += characters.charAt(randomIndex);
+        }
+        $("#password-input").val(password);
+    });
+    ',
+    \yii\web\View::POS_READY
+);
+
 ?>
 
 <div class="box box-primary">
@@ -12,7 +30,14 @@ $this->title = 'Tambah Pengguna Baru';
 
         <?= $form->field($model, 'username')->textInput(['placeholder' => 'Masukkan Username']) ?>
 
-        <?= $form->field($model, 'password')->textInput(['placeholder' => 'Masukkan Password']) ?>
+        <?= $form->field($model, 'password')->textInput([
+            'placeholder' => 'Masukkan Password',
+            'id' => 'password-input'
+        ]) ?>
+
+        <div class="form-group">
+            <?= Html::button('Generate Password', ['class' => 'btn btn-default', 'id' => 'generate-password']) ?>
+        </div>
 
         <?= $form->field($model, 'nama')->textInput(['placeholder' => 'Masukkan Nama']) ?>
 

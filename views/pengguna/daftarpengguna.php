@@ -50,6 +50,23 @@ $this->title = 'Daftar Pengguna';
                             ]);
                         },
                     ],
+                ],
+                [
+                    'attribute' => 'status',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        $label = $model->status == 10 ? 'Aktif' : 'Nonaktif';
+                        $class = $model->status == 10 ? 'btn btn-success btn-sm' : 'btn btn-default btn-sm';
+                        $icon = $model->status == 10 ? 'fa fa-toggle-on' : 'fa fa-toggle-off';
+                        $url = ['pengguna/togglestatus', 'id' => $model->id];
+                        return Html::a("<i class='{$icon}'></i> {$label}", $url, [
+                            'class' => $class,
+                            'data' => [
+                                'method' => 'post',
+                                'confirm' => 'Yakin ingin mengubah status pengguna ini?',
+                            ],
+                        ]);
+                    },
                 ],                
             ],
         ]); ?>

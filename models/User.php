@@ -9,6 +9,9 @@ use yii\web\IdentityInterface;
 class User extends ActiveRecord implements IdentityInterface
 {
     public $password;
+    public $old_password;
+    const STATUS_INACTIVE = 0;
+    const STATUS_ACTIVE = 10;
     public static function tableName()
     {
         return 'user';
@@ -19,10 +22,13 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             [['username', 'nama', 'biro_pekerjaan_id'], 'required'],
             [['username', 'nama'], 'string', 'max' => 255],
-            [['password'], 'safe'], 
+            [['old_password', 'password'], 'safe'], 
+            [['old_password'], 'validateOldPassword'],
             [['password'], 'required', 'on' => 'create'],
             [['biro_pekerjaan_id'], 'integer'],
             [['username'], 'unique'],
+            [['status'], 'default', 'value' => self::STATUS_ACTIVE],
+            [['status'], 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE]],
         ];
     }
 
@@ -52,12 +58,12 @@ class User extends ActiveRecord implements IdentityInterface
 
     public static function findIdentity($id)
     {
-        return static::findOne($id);
+        return static::findOne(['id' => $id, 'status' => self::STATUS_ACTIVE]);
     }
 
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        return null;
+        return static::findOne(['access_token' => $token, 'status' => self::STATUS_ACTIVE]);
     }
 
     public function getId()
@@ -83,6 +89,13 @@ class User extends ActiveRecord implements IdentityInterface
     public function validatePassword($password)
     {
         return Yii::$app->security->validatePassword($password, $this->password_hash);
+    }
+
+    public function validateOldPassword($attribute, $params)
+    {
+        if (!Yii::$app->security->validatePassword($this->$attribute, $this->getOldAttribute('password_hash'))) {
+            $this->addError($attribute, 'Password lama tidak sesuai.');
+        }
     }
 }
 

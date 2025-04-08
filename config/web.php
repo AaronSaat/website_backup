@@ -38,10 +38,11 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'loginUrl' => ['site/login'],
         ],
-        // 'authManager' => [
-        //     'class' => 'yii\rbac\DbManager',
-        // ],
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager',
+        ],
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
@@ -89,16 +90,18 @@ $config = [
             ],
         ],      
     ],
-    // 'as access' => [
-    //     'class' => 'mdm\admin\components\AccessControl',
-    //     'allowActions' => [
-    //         'site/login',
-    //         'site/logout',
-    //         'site/error',
-    //         'admin/*', // sementara agar bisa akses RBAC, hapus nanti
-    //     ],
-    // ],
+    'as access' => [
+        'class' => 'mdm\admin\components\AccessControl',
+        'allowActions' => [
+            'site/login',
+            'site/logout',
+            'site/error',
+            'admin/*',
+            'gii/*',
+        ],
+    ],
     'params' => $params,
+    'name' => 'Backup Log',
 ];
 
 if (YII_ENV_DEV) {

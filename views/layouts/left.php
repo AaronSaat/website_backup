@@ -2,6 +2,7 @@
 use yii\bootstrap\Nav;
 use yii\helpers\Html;
 
+$isAdmin = Yii::$app->user->can('admin');
 ?>
 <aside class="main-sidebar">
     <section class="sidebar">
@@ -30,23 +31,22 @@ use yii\helpers\Html;
             'options' => ['class' => 'sidebar-menu'],
             'items' => array_filter([
                 '<li class="header">Menu</li>',
-                Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                ['label' => '<span class="fa fa-file-code-o"></span> Gii', 'url' => ['/gii']] : null,
+                // ['label' => '<span class="fa fa-file-code-o"></span> Gii', 'url' => ['/gii']],
                 
                 Yii::$app->user->identity ? 
-                    ['label' => '<i class="fa fa-folder-open"></i> Lihat Laporan Backup', 'url' => ['/site/index']] : null,
+                    ['label' => '<i class="fa fa-folder-open"></i> Backup Log', 'url' => ['/site/index']] : null,
 
-                Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                    ['label' => '<i class="fa fa-users"></i> Lihat Daftar Pengguna', 'url' => ['/pengguna/daftarpengguna']] : null,
+                $isAdmin ? 
+                    ['label' => '<i class="fa fa-users"></i> Pengguna', 'url' => ['/pengguna/daftarpengguna']] : null,
 
-                Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                    ['label' => '<i class="fa fa-building"></i> Lihat Daftar Biro Pekerjaan', 'url' => ['/biro/daftarbiro']] : null,
+                $isAdmin ? 
+                    ['label' => '<i class="fa fa-building"></i> Biro / UPT', 'url' => ['/biro/daftarbiro']] : null,
 
-                Yii::$app->user->identity && Yii::$app->user->identity->username === 'admin' ? 
-                    ['label' => '<i class="fa fa-tags"></i> Lihat Daftar Kategori', 'url' => ['/kategori/daftarkategori']] : null,
+                $isAdmin? 
+                    ['label' => '<i class="fa fa-tags"></i> Kategori', 'url' => ['/kategori/daftarkategori']] : null,
 
                 Yii::$app->user->identity ? 
-                    ['label' => '<i class="fa fa-history"></i> Lihat Daftar Aktivitas', 'url' => ['/activity/daftaractivity']] : null,
+                    ['label' => '<i class="fa fa-history"></i> Aktivitas', 'url' => ['/activity/daftaractivity']] : null,
 
                 Yii::$app->user->identity ?
                 ['label' => '<i class="fa fa-plus-square"></i> Tambah Laporan', 'url' => ['/site/tambahlaporan']] : null,

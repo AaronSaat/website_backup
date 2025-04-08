@@ -81,6 +81,13 @@ use yii\bootstrap\NavBar;
                                     <?= Html::a('<span class="glyphicon glyphicon-lock"></span> Masuk', ['/site/login'], ['class' => 'btn btn-success btn-block']) ?>
                                 </div>
                             <?php else: ?>
+                                <div class="text-center" style="margin-bottom: 5px;">
+                                    <?= Html::a(
+                                        '<span class="glyphicon glyphicon-cog"></span> Ganti Password',
+                                        ['/pengguna/gantipassword'], // nanti kamu buat route ini
+                                        ['class' => 'btn btn-info btn-block']
+                                    ) ?>
+                                </div>
                                 <div class="text-center">
                                     <?= Html::a(
                                         '<span class="glyphicon glyphicon-off"></span> Keluar (' . Yii::$app->user->identity->nama . ')',

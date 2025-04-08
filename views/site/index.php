@@ -8,6 +8,41 @@ $this->title = 'Dashboard - Website Laporan Backup';
 
 setlocale(LC_TIME, 'id_ID.UTF-8', 'Indonesian_indonesia.1252');
 date_default_timezone_set('Asia/Jakarta');
+
+function formatTanggalIndonesia($tanggal) {
+    $hari = [
+        'Sunday' => 'Minggu',
+        'Monday' => 'Senin',
+        'Tuesday' => 'Selasa',
+        'Wednesday' => 'Rabu',
+        'Thursday' => 'Kamis',
+        'Friday' => 'Jumat',
+        'Saturday' => 'Sabtu',
+    ];
+
+    $bulan = [
+        '01' => 'Januari',
+        '02' => 'Februari',
+        '03' => 'Maret',
+        '04' => 'April',
+        '05' => 'Mei',
+        '06' => 'Juni',
+        '07' => 'Juli',
+        '08' => 'Agustus',
+        '09' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember',
+    ];
+
+    $timestamp = strtotime($tanggal);
+    $namaHari = $hari[date('l', $timestamp)];
+    $tgl = date('d', $timestamp);
+    $bln = date('m', $timestamp);
+    $thn = date('Y', $timestamp);
+
+    return $namaHari . ', ' . $tgl . ' ' . $bulan[$bln] . ' ' . $thn;
+}
 ?>
 
 <div class="row">
@@ -17,10 +52,14 @@ date_default_timezone_set('Asia/Jakarta');
                 <h3 class="box-title"><?= $message ?></h3>
             </div>
             <div class="box-body">
-                <p><strong>Tanggal hari ini: </strong><?= strftime('%A, %d %B %Y', time()) ?></p>
+                <p><strong>Tanggal hari ini: </strong><?= formatTanggalIndonesia(date('Y-m-d')) ?></p>
 
                 <?php if ($cardType !== 'warning'): // Tidak tampilkan jika menunggu approval ?>
-                    <p><strong>Backup terakhir: </strong><?= $lastBackupDate ? strftime('%A, %d %B %Y', strtotime($lastBackupDate)) : 'Belum ada backup' ?></p>
+                    <p><strong>Backup terakhir: </strong>
+                        <?= !empty($lastBackupDate)
+                            ? formatTanggalIndonesia(is_string($lastBackupDate) ? $lastBackupDate : $lastBackupDate->format('Y-m-d'))
+                            : 'Belum ada backup' ?>
+                    </p>
 
                     <?php if ($daysSinceLastBackup !== 'N/A'): ?>
                         <p><strong><?= "$daysSinceLastBackup hari semenjak backup terakhir" ?></strong></p>
@@ -41,7 +80,7 @@ date_default_timezone_set('Asia/Jakarta');
         </h3>
         <div class="pull-right d-flex align-items-center gap-2" style="display: flex; align-items: center; gap: 10px;">
             <!-- Filter Biro Pekerjaan -->
-            <?php if (Yii::$app->user->identity->username === 'admin'): ?>
+            <?php if (Yii::$app->user->can('admin')): ?>
                 <label for="filter-biro" style="margin-right: 5px;">Filter Biro Pekerjaan:</label>
                 <select id="filter-biro" class="form-control" style="width: 200px; display: inline-block; margin-right: 15px;">
                     <option value="">Semua</option>
@@ -114,7 +153,7 @@ date_default_timezone_set('Asia/Jakarta');
                                                     <i class="fa fa-times-circle"></i> Disapproved
                                                 </span>';
                                 $statusText = "<small><i class='fa fa-calendar'></i> Disapproved at: $updatedAt</small>
-                                               <br><small><i class='fa fa-exclamation-circle'></i> Cek catatan admin</small>";
+                                            <br><small><i class='fa fa-exclamation-circle'></i> Cek catatan admin</small>";
                                 break;
                             default:
                                 $statusLabel = '<span class="label label-default">
@@ -132,10 +171,8 @@ date_default_timezone_set('Asia/Jakarta');
                     'format' => 'raw',
                     'value' => function ($model) {
                         $buttons = '';
-                
-                        $currentUser = Yii::$app->user->identity;
-                        $isAdmin = ($currentUser->username === 'admin');
-                        $isOwner = ($model->user_id === $currentUser->id);
+                        
+                        $isAdmin = Yii::$app->user->can('admin');
                 
                         // Jika Admin dan status "Waiting for Approval", tampilkan tombol Approve/Disapprove
                         if ($isAdmin && $model->status === 'Waiting for Approval') {

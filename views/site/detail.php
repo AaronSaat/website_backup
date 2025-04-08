@@ -15,11 +15,46 @@ $this->params['breadcrumbs'][] = ['label' => 'Laporan', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
 $user = Yii::$app->user->identity;
-$isAdmin = isset($user) && $user->username === 'admin';
+$isAdmin = Yii::$app->user->can('admin');
 $isOwner = $model->user_id === $user->id;
 
 // Ambil daftar kategori dari database
 $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori');
+
+function formatTanggalIndonesia($tanggal) {
+    $hari = [
+        'Sunday' => 'Minggu',
+        'Monday' => 'Senin',
+        'Tuesday' => 'Selasa',
+        'Wednesday' => 'Rabu',
+        'Thursday' => 'Kamis',
+        'Friday' => 'Jumat',
+        'Saturday' => 'Sabtu',
+    ];
+
+    $bulan = [
+        '01' => 'Januari',
+        '02' => 'Februari',
+        '03' => 'Maret',
+        '04' => 'April',
+        '05' => 'Mei',
+        '06' => 'Juni',
+        '07' => 'Juli',
+        '08' => 'Agustus',
+        '09' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember',
+    ];
+
+    $timestamp = strtotime($tanggal);
+    $namaHari = $hari[date('l', $timestamp)];
+    $tgl = date('d', $timestamp);
+    $bln = date('m', $timestamp);
+    $thn = date('Y', $timestamp);
+
+    return $namaHari . ', ' . $tgl . ' ' . $bulan[$bln] . ' ' . $thn;
+}
 ?>
 <div class="box box-primary">
     <div class="box-header with-border">
@@ -69,8 +104,7 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                 [
                     'label' => 'Tanggal Backup',
                     'value' => function ($model) {
-                        setlocale(LC_TIME, 'id_ID.UTF-8', 'Indonesian_indonesia.1252');
-                        return strftime('%A, %d %B %Y', strtotime($model->tanggal_backup));
+                        return formatTanggalIndonesia($model->tanggal_backup);
                     }
                 ],             
                 [
@@ -178,7 +212,7 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($isAdmin || ($isOwner && in_array($file->status, ['Waiting for Approval', 'Disapprove']))): ?> 
+                                <?php if ($isAdmin || ($isOwner && empty($log->approved_at))): ?> 
                                     <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletelog', 'id' => $log->id], [
                                         'class' => 'btn btn-danger btn-sm',
                                         'data' => [
@@ -265,7 +299,7 @@ $kategoriList = ArrayHelper::map(Kategori::find()->all(), 'id', 'nama_kategori')
                                     ]) ?>
                                 <?php endif; ?>
 
-                                <?php if ($isAdmin || ($isOwner && in_array($model->status, ['Waiting for Approval', 'Disapprove']))): ?> 
+                                <?php if ($isAdmin || ($isOwner && empty($file->approved_at))): ?> 
                                     <?= Html::a('<i class="fa fa-trash"></i> Hapus', ['site/deletefile', 'id' => $file->id], [
                                         'class' => 'btn btn-danger btn-sm',
                                         'data' => [
