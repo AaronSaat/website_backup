@@ -87,6 +87,15 @@ $config = [
                 // '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 // '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 // '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => ['api'], // Sesuai nama ApiController
+                    'pluralize' => false, // biar URL tetap pakai "api/user" bukan "apis/user"
+                    'extraPatterns' => [
+                        'GET user' => 'user', // endpoint: GET /api/user?id=1
+                        'POST login' => 'login',
+                    ],
+                ]
             ],
         ],      
     ],
@@ -98,6 +107,8 @@ $config = [
             'site/error',
             'admin/*',
             'gii/*',
+            'api/user',
+            'api/login',
         ],
     ],
     'params' => $params,

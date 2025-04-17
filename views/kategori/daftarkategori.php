@@ -14,7 +14,7 @@ $this->title = 'Daftar Kategori';
                 <?= Html::a('<i class="fa fa-plus"></i> Tambah Kategori', ['kategori/tambahkategori'], ['class' => 'btn btn-success']) ?>
             <?php endif; ?>
         </div>
-    </div>
+    </div> 
     <div class="box-body">
         <?= GridView::widget([
             'dataProvider' => $dataProvider,

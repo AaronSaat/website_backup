@@ -92,7 +92,7 @@ function formatTanggalIndonesia($tanggal) {
                 </select>
 
                 <!-- Search Nama -->
-                <form method="GET" style="display: inline-flex;">
+                <form method="GET" style="display: inline-flex;">   
                     <input type="text" name="search_nama" value="<?= Html::encode($searchNama) ?>" 
                         class="form-control" placeholder="Cari Nama..." style="width: 200px; margin-right: 10px;">
                     <button type="submit" class="btn btn-success"><i class="fa fa-search"></i> Cari</button>

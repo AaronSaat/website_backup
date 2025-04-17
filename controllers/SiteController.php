@@ -59,10 +59,10 @@ class SiteController extends Controller
         if (!Yii::$app->user->can('lihatLaporan')) {
             throw new \yii\web\ForbiddenHttpException('Anda tidak punya izin untuk melihat laporan.');
         }
+
         $query = Laporan::find()
             ->joinWith(['user', 'user.biroPekerjaan'])
             ->orderBy(['created_at' => SORT_DESC]);
-            // ->where(['!=', 'user_id', 1]); // Jangan tampilkan user dengan id 1
 
         $biroList = BiroPekerjaan::find()->asArray()->all();
         $userList = User::find()->asArray()->all();
@@ -71,18 +71,27 @@ class SiteController extends Controller
         $searchNama = trim(Yii::$app->request->get('search_nama'));
 
         $currentUser = Yii::$app->user->identity;
-        $isAdmin = ($currentUser->username === 'admin');
 
-        if (!$isAdmin) {
-            $query->andWhere(['user.biro_pekerjaan_id' => $currentUser->biro_pekerjaan_id]);
+        // Cek role berdasarkan RBAC MDM
+        $isAdmin = Yii::$app->user->can('admin');
+        $isSuperAdmin = Yii::$app->user->can('superadmin');
+
+        // Jika BUKAN admin atau superadmin, batasi akses ke biro yang sama dan sembunyikan user id 1 & 2
+        if (!$isAdmin && !$isSuperAdmin) {
+            $query->andWhere([
+                'user.biro_pekerjaan_id' => $currentUser->biro_pekerjaan_id
+            ])->andWhere(['not in', 'user.id', [1, 2]]);
         }
 
-        if ($selectedBiro) {
-            $query->andWhere(['user.biro_pekerjaan_id' => $selectedBiro]);
-        }
+        // Filter kategori dan pencarian nama hanya untuk admin & superadmin
+        if ($isAdmin || $isSuperAdmin) {
+            if ($selectedBiro) {
+                $query->andWhere(['user.biro_pekerjaan_id' => $selectedBiro]);
+            }
 
-        if (!empty($searchNama)) {
-            $query->andWhere(['LIKE', 'user.nama', $searchNama]); 
+            if (!empty($searchNama)) {
+                $query->andWhere(['LIKE', 'user.nama', $searchNama]); 
+            }
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -90,17 +99,17 @@ class SiteController extends Controller
             'pagination' => ['pageSize' => 30],
         ]);
 
-        // Ambil laporan satu-satunya user yang sedang login
+        // Ambil laporan user yang sedang login
         $userReport = Laporan::findOne(['user_id' => $currentUser->id]);
 
-        // Format tanggal dalam bahasa Indonesia
+        // Format tanggal dalam Bahasa Indonesia
         setlocale(LC_TIME, 'id_ID.UTF-8');
         $today = new DateTime();
         $formattedToday = strftime('%A, %d %B %Y', $today->getTimestamp());
 
         // Default values
         $lastBackupDate = 'Belum ada backup';
-        $cardType = 'danger'; // Mohon melakukan backup
+        $cardType = 'danger';
         $message = 'Mohon melakukan backup bulan ini';
         $daysSinceLastBackup = 'N/A';
 
@@ -117,7 +126,7 @@ class SiteController extends Controller
             } elseif ($userReport->status === 'Waiting for Approval') {
                 $cardType = 'warning';
                 $message = 'Menunggu approval dari admin';
-                $lastBackupDate = null; // Tidak perlu menampilkan last backup
+                $lastBackupDate = null;
                 $daysSinceLastBackup = null;
             }
         }
@@ -135,6 +144,7 @@ class SiteController extends Controller
             'formattedToday' => $formattedToday,
         ]);
     }
+
 
     public function actionLogin()
     {

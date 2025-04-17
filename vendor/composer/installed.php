@@ -3,7 +3,7 @@
         'name' => 'yiisoft/yii2-app-basic',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '6070a466f1fce686bc0c64704aeab087d0671749',
+        'reference' => '7cd5133c99458e2c89cadc1806b3a7f106c88d87',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -240,6 +240,15 @@
             'install_path' => __DIR__ . '/../fakerphp/faker',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'firebase/php-jwt' => array(
+            'pretty_version' => 'v6.11.1',
+            'version' => '6.11.1.0',
+            'reference' => 'd1e91ecf8c598d073d0995afa8cd5c75c6e19e66',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../firebase/php-jwt',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'fortawesome/font-awesome' => array(
             'pretty_version' => 'v4.3.0',
@@ -868,7 +877,7 @@
         'yiisoft/yii2-app-basic' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '6070a466f1fce686bc0c64704aeab087d0671749',
+            'reference' => '7cd5133c99458e2c89cadc1806b3a7f106c88d87',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
